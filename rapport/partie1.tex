@@ -1,0 +1,653 @@
+\documentclass[11pt,a4paper]{ctexart}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds,calc}
+\usepackage{pgf-umlcd}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{adjustbox}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black}
+\setlist{itemsep=2pt,topsep=3pt}
+\captionsetup{font=small}
+
+\sloppy
+\setlength{\emergencystretch}{4em}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!40!black},
+  frame=single,
+  rulecolor=\color{gray!50},
+  breaklines=true,
+  showstringspaces=false,
+  xleftmargin=4pt,
+  xrightmargin=4pt
+}
+
+\newcommand{\cl}[1]{\texttt{#1}}
+
+\title{\textbf{LO02 --- Projet Codex Naturalis}\\[4pt]
+\large 基于课程所授 C++ 与设计模式的控制台实现\\[2pt]
+\large Rapport de projet}
+\author{【小组成员姓名】\\
+Université de Technologie Sino-Européenne de l'Université de Shanghai}
+\date{2026 年 12 月}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\vspace{6mm}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+课程 & LO02 --- Principes et pratique de la programmation orientée objet \\
+学年 & 2026--2027 秋季学期（A26）\\
+游戏 & Codex Naturalis（Thomas Dupont / Bombyx）\\
+实现方式 & C++14，控制台界面，无第三方库 \\
+代码规模 & 约 4\,100 行 C++（\cl{src/}，含头文件）+ 约 530 行测试 \\
+视频链接 & \cl{【在此处填写 bilibili 链接】} \\
+提交日期 & 2026-12-28 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{8mm}
+\begin{quote}
+\textbf{摘要。}本项目用课程所讲授的 C++ 语言与面向对象设计方法，完整实现了桌游
+\emph{Codex Naturalis} 的控制台版本。程序支持 1--4 名玩家（真人与电脑混合）、
+严格的放置与资源校验、三类镀金牌的即时计分、四类目标卡的终局计分，以及完整的终局判定。
+架构上刻意只使用课件出现过的语言特性与七个设计模式（Template Method、Strategy、
+Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动化脚本证明
+「零超纲」：全部源码在 \cl{-Wall -Wextra -pedantic} 下零警告，
+\cl{c++14}/\cl{c++17} 均可编译，207 次断言全部通过，200 局自动对局无异常。
+\end{quote}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{项目概述}
+
+\subsection{游戏简介}
+\emph{Codex Naturalis} 是一款二人以上（可单人）的卡牌摆放游戏。玩家扮演缮写修士，
+要把「活页」拼接成自己的手稿：每张牌有四个角落，角落上可能印有四种王国资源
+（植物、动物、真菌、昆虫）、三种物件（羽毛、墨水瓶、羊皮纸），也可能是「空角」或「缺失角」。
+玩家每回合把手牌放一张到自己的区域，再抽一张新牌。放牌必须\textbf{覆盖}场上已有的一个
+可见角落，而且不能同时覆盖同一张牌的两个角落——这就形成了「用资源换空间」的核心张力：
+覆盖会盖掉自己已有的资源，但也让区域继续生长。
+
+得分有两条线：一是放牌当下的即时分（资源牌可能带 1 分；镀金牌按固定分、
+按覆盖的角落数、或按场上物件数计分）；二是终局的目标卡分
+（2 张公共目标 + 1 张秘密目标，分别按斜线、L 型、三同资源、物件对/三异等图案计分）。
+先到 20 分或两个牌堆抽空触发终局：补完本轮、每人最后一回合，然后结算目标分。
+
+\subsection{项目目标与成功标准}
+\begin{enumerate}
+\item \textbf{功能完整}：开局参数化（人数与姓名）、动作合法性校验、终局判定、计分与胜负判定，
+      控制台画面足以理解局面。
+\item \textbf{架构可扩展}：新增 AI、新增目标类型、新增牌类或新增显示方式时，
+      不修改既有的规则代码。
+\item \textbf{严守课程范围}：只使用课件出现过的语言特性与设计模式，不用 lambda、
+      不用 \cl{std::function}、不用任何第三方库。
+\item \textbf{可验证}：单元测试、批量自动对局、静态检查三条线全部可复现。
+\end{enumerate}
+
+\subsection{「不超纲」的界定}
+课件共 133 页，覆盖语言基础、类与 UML、封装与构造析构、静态成员、运算符重载、
+自定义异常、对象关联、拷贝赋值、智能指针、继承与多态、抽象类、类型转换与 RTTI、
+函数模板与类模板、标准库（string、iostream、STL 容器/迭代器/算法）以及七个设计模式。
+课件\textbf{没有}讲授 lambda、\cl{std::function}、\cl{optional/variant/filesystem}、
+ranges/concepts/modules、线程、正则、\cl{chrono}、\cl{format} 等，因此本项目一律不用。
+具体到实现层面的三条自定规则是：
+\begin{itemize}
+\item 任何「算法参数」都用\textbf{对象}表达（\cl{StrategieIA}），而不是函数对象或 lambda；
+\item 所有动态分配都通过 \cl{std::shared\_ptr} / \cl{std::make\_shared} / \cl{std::make\_unique}
+      （唯一例外是 \cl{CatalogueCartes} 单例内部的静态裸指针，与课件第 104 页写法一致）；
+\item 测试不引入 Catch2/gtest，而是 40 行的自制断言宏。
+\end{itemize}
+
+\section{功能实现情况}
+
+表 \ref{tab:fonctions} 逐条对照作业要求。所有要求的功能均已实现，并由
+\cl{codex\_tests.exe} 中的用例覆盖。
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{5.4cm}p{1.5cm}p{7.6cm}}
+\toprule
+作业要求的功能 & 状态 & 实现位置与说明 \\
+\midrule
+开局参数化（人数、姓名） & 已完成 & \cl{Menu}：1--4 人、每座位姓名、真人/电脑、AI 难度 \\
+单人/多人模式 & 已完成 & 1 人即「1 真人 + IA」；每座位可独立设为电脑 \\
+初始牌选面 & 已完成 & \cl{Partie::choisirFaceInitiale}；界面同时显示正反两面的角与中央资源 \\
+秘密目标二选一 & 已完成 & \cl{Partie::choisirObjectifSecret}（2 张候选） \\
+放牌合法性校验 & 已完成 & \cl{ZoneDeJeu::placementValide}：可见角、隐藏角、重叠、镀金资源 \\
+抽牌合法性校验 & 已完成 & \cl{Partie::piocher}：4 张明牌或两牌堆；非法来源抛异常 \\
+终局判定 & 已完成 & 20 分或两牌堆空；补轮 + 最后一回合 \\
+即时计分 & 已完成 & 资源牌横幅分、镀金牌固定分/按角/按物件 \\
+目标计分 & 已完成 & 斜线、L、三同资源、物件对与三异 \\
+胜负与平局 & 已完成 & 总分 $\rightarrow$ 目标分 $\rightarrow$ 并列 \\
+控制台局面显示 & 已完成 & \cl{VueConsole}：角标网格 + 已放牌清单 + 资源/物件统计 + 手牌详情 \\
+\bottomrule
+\end{tabular}
+\caption{功能需求与实现对照}
+\label{tab:fonctions}
+\end{table}
+
+\section{总体架构}
+
+\subsection{分层与依赖方向}
+项目分为四层（图 \ref{fig:archi}）：
+\cl{noyau}（与业务无关的工具：资源枚举、坐标、随机数、异常、洗牌模板）、
+\cl{modele}（全部规则：\cl{Partie}、\cl{Joueur}、\cl{ZoneDeJeu}、\cl{Pioche}、
+卡牌与目标层次、\cl{CatalogueCartes}、\cl{StrategieIA}）、
+\cl{vue}（显示：抽象 \cl{Vue} 与控制台实现）、
+\cl{controleur}（交互：菜单、主循环、输入适配、自动回合、批量模拟）。
+依赖方向严格单向：\cl{main} $\rightarrow$ \cl{controleur} $\rightarrow$
+\{\cl{modele}, \cl{vue}\} $\rightarrow$ \cl{noyau}。
+
+最关键的设计决定是：\textbf{模型层不做任何输入输出}。\cl{Partie} 只接收
+「放这张牌到这个位置」「从那里抽一张」这样的动作，要么成功、要么抛出
+\cl{ExceptionJeu} 子类且状态不变。因此：
+\begin{itemize}
+\item 引擎可以被测试直接驱动（不需要模拟键盘）；
+\item 换一套界面（图形界面、网络）不需要改规则；
+\item 相同种子的对局完全可复现，便于回归测试。
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[node distance=6mm, font=\small,
+  couche/.style={draw, rounded corners, fill=blue!6, align=center, text width=10.2cm, minimum height=9mm}]
+\node[couche] (main) {\cl{main.cpp}：命令行参数、选择交互模式或自动模式};
+\node[couche, below=of main] (ctrl) {\cl{controleur/}：Menu、ControleurPartie、Saisie 与 AdaptateurFlux、TourAutomatique、SimulationIA};
+\node[couche, below=of ctrl] (vue) {\cl{vue/}：\cl{Vue}（抽象接口）$\Rightarrow$ \cl{VueConsole}（控制台实现）};
+\node[couche, below=of vue] (model) {\cl{modele/}：Partie、Joueur、ZoneDeJeu、Pioche、Carte 层次、Objectif 层次、CatalogueCartes、StrategieIA};
+\node[couche, below=of model, fill=gray!10] (noyau) {\cl{noyau/}：Ressource、Coin、Coordonnee、GenerateurAleatoire、ExceptionJeu、Melange};
+\draw[-{Latex}] (main) -- (ctrl);
+\draw[-{Latex}] (ctrl) -- (vue);
+\draw[-{Latex}] (vue.south) -- (model.north);
+\draw[-{Latex}] (model) -- (noyau);
+\node[right=1mm of ctrl.east, align=left, font=\scriptsize, text=gray] {单向依赖};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{四层架构与单向依赖}
+\label{fig:archi}
+\end{figure}
+
+\subsection{一次回合的交互时序}
+图 \ref{fig:seq} 给出一名真人玩家放一张牌的完整交互：控制器先让视图打印局面，
+再依次询问手牌编号、正反面与落点；模型在真正修改状态之前完成全部校验，
+因此任何一次拒绝都不会破坏对局状态。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[font=\scriptsize, every node/.style={align=center}]
+\foreach \x/\n in {0/Joueur, 3.0/ControleurPartie, 6.2/Partie, 9.2/ZoneDeJeu, 12.0/VueConsole} {
+  \node[draw, rounded corners, fill=blue!8, minimum width=2.5cm] (l\x) at (\x,0) {\n};
+  \draw[dashed, gray] (\x,-0.45) -- (\x,-8.0);
+}
+\draw[-{Latex}] (0,-0.9) -- (12,-0.9) node[midway, above] {afficherTable / afficherZone / afficherMain / afficherEtalees};
+\draw[-{Latex}] (12,-1.4) -- (3.0,-1.4) node[midway, above] {texte affiche};
+\draw[-{Latex}] (0,-1.9) -- (3.0,-1.9) node[midway, above] {carte, face, position (saisies)};
+\draw[-{Latex}] (3.0,-2.4) -- (6.2,-2.4) node[midway, above] {jouerCarte(i, (x,y), recto)};
+\draw[-{Latex}] (6.2,-2.9) -- (9.2,-2.9) node[midway, above] {placementValide(...)};
+\draw[{Latex}-] (6.2,-3.4) -- (9.2,-3.4) node[midway, above] {bool + cause};
+\draw[-{Latex}] (6.2,-3.9) -- (9.2,-3.9) node[midway, above] {compterCoinsCouverts, poser};
+\draw[{Latex}-] (6.2,-4.4) -- (9.2,-4.4) node[midway, above] {symbolesVisibles()};
+\node[draw, fill=yellow!12, minimum width=4.6cm] at (6.2,-4.9) {points = carte.pointsAuPose(contexte)};
+\draw[-{Latex}] (6.2,-5.4) -- (3.0,-5.4) node[midway, above] {exception eventuelle (ExceptionJeu)};
+\draw[-{Latex}] (3.0,-5.9) -- (12,-5.9) node[midway, above] {afficherErreur(msg) ou continuer};
+\draw[-{Latex}] (0,-6.4) -- (3.0,-6.4) node[midway, above] {source de pioche (saisie)};
+\draw[-{Latex}] (3.0,-6.9) -- (6.2,-6.9) node[midway, above] {piocher(source, indice)};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{放牌与抽牌的交互时序}
+\label{fig:seq}
+\end{figure}
+
+\subsection{对局状态机}
+\cl{Partie} 的状态由一个枚举描述（图 \ref{fig:etats}）：
+\cl{NON\_DEMARREE} $\rightarrow$ \cl{PREPARATION}（选初始牌面、选秘密目标）
+$\rightarrow$ \cl{EN\_COURS} $\rightarrow$ \cl{DERNIER\_TOUR} $\rightarrow$ \cl{TERMINEE}。
+\cl{DERNIER\_TOUR} 用倒计数 \cl{toursRestants} 实现「补完本轮 + 每人最后一回合」：
+触发瞬间计算剩余回合数，每完成一个回合减一，归零即进入结算。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm,
+  etat/.style={draw, rounded corners, fill=green!8, minimum width=2.3cm, minimum height=8mm, align=center}]
+\node[etat] (a) {NON\_DEMARREE};
+\node[etat, right=of a] (b) {PREPARATION};
+\node[etat, right=of b] (c) {EN\_COURS};
+\node[etat, right=of c] (d) {DERNIER\_TOUR};
+\node[etat, right=of d] (e) {TERMINEE};
+\draw[-{Latex}] (a) -- node[above, font=\scriptsize]{preparer()} (b);
+\draw[-{Latex}] (b) -- node[above, font=\scriptsize]{commencer()} (c);
+\draw[-{Latex}] (c) -- node[above, font=\scriptsize]{$\ge$20 ou tas vides} (d);
+\draw[-{Latex}] (d) -- node[above, font=\scriptsize]{compteur nul} (e);
+\end{tikzpicture}
+\end{adjustbox}
+\caption{对局状态机}
+\label{fig:etats}
+\end{figure}
+
+\subsection{备选方案与权衡}
+设计过程中比较过四种做法，最终选择都以「只用课程讲过的工具」为前提：
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.4cm}p{4.6cm}p{5.6cm}}
+\toprule
+问题 & 备选方案 & 采用方案与理由 \\
+\midrule
+如何表达「不同 AI」 & 函数指针 / 回调函数 / lambda & \textbf{Strategy 对象}\\：课件讲的是「用对象表示算法」，且可携带状态 \\
+如何组织界面与规则 & 第三方 GUI 框架 / 事件驱动 & \textbf{抽象 \cl{Vue} + 控制台实现}\\：不引入外部库，模型零 I/O \\
+如何保存 86 张牌 & 运行时读取 JSON/CSV & \textbf{编译期静态表}\\：合法使用课程内容，无需解析库，启动零依赖 \\
+棋盘容器 & 变长二维数组 / 链表 & \textbf{\cl{map<Coordonnee, size\_t>}}\\：坐标可为负、按需增长 \\
+所有权 & 裸指针 + 手动 delete & \textbf{智能指针}\\：异常安全，课件第 56--57 页 \\
+\bottomrule
+\end{tabular}
+\caption{关键设计点的备选方案与最终选择}
+\label{tab:choix}
+\end{table}
+
+举一个具体例子：如果允许 lambda，AI 可以写成
+\cl{std::function<ActionTour(const Partie\&)>}，代码更短。但那样会同时引入
+课程未讲的 lambda 与 \cl{std::function}，而且策略无法保存自己的随机数状态。
+用 Strategy 基类反而更贴合课件，也让「新增 AI 不改引擎」在类型层面得到保证。
+
+\section{类设计}
+
+\subsection{卡牌层次（Template Method）}
+\cl{Carte} 是抽象类，保存编号、所属王国与牌堆类别；\cl{face(bool)} 与 \cl{nom()} 为纯虚函数，
+由 \cl{CarteRessource}、\cl{CarteDoree}、\cl{CarteInitiale} 实现。
+计分采用模板方法：骨架「固定分 + 可变分」只写一次，变化点留给子类。
+
+\begin{lstlisting}
+class Carte {
+public:
+    int pointsAuPose(const ContextePose& contexte) const {
+        return pointsFixes() + pointsVariables(contexte);   // trame fixe
+    }
+    virtual bool exigencesSatisfaites(const std::map<Ressource,int>&) const;
+protected:
+    virtual int pointsFixes() const = 0;                    // etape 1
+    virtual int pointsVariables(const ContextePose&) const; // etape 2 (hook, 0 par defaut)
+};
+\end{lstlisting}
+
+\cl{CarteRessource} 只实现第一步（0 或 1 分）；\cl{CarteDoree} 实现两步
+（固定分 / 每覆盖角 2 分 / 每物件 1 分）并实现资源需求判断；
+\cl{CarteInitiale} 得 0 分。新增一类牌时只需新增子类与数据表条目，引擎无需修改。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}
+\begin{class}{Carte}{0,0}
+\attribute{\# id : int}
+\attribute{\# royaume : Ressource}
+\attribute{\# categorie : int}
+\operation{+ pointsAuPose(c) : int}
+\operation{\underline{\# pointsFixes() : int}}
+\operation{\# pointsVariables(c) : int}
+\end{class}
+\begin{class}{CarteRessource}{-6.8,-5.4}
+\attribute{- recto, verso : FaceCarte}
+\attribute{- pointsBanniere : int}
+\end{class}
+\begin{class}{CarteDoree}{0,-6.0}
+\attribute{- typeScore : TypeScoreDore}
+\attribute{- exigences : map}
+\operation{+ exigencesSatisfaites(r) : bool}
+\end{class}
+\begin{class}{CarteInitiale}{6.8,-5.4}
+\attribute{- faceRecto, faceVerso : FaceCarte}
+\end{class}
+\draw[-{Triangle[open]}] (CarteRessource.north) -- (Carte.south -| CarteRessource.north);
+\draw[-{Triangle[open]}] (CarteDoree.north) -- (Carte.south);
+\draw[-{Triangle[open]}] (CarteInitiale.north) -- (Carte.south -| CarteInitiale.north);
+\end{tikzpicture}
+\end{adjustbox}
+\caption{\cl{Carte} 层次}
+\label{fig:carte}
+\end{figure}
+
+\subsection{目标层次（Composite）}
+目标抽象类 \cl{Objectif} 只有两个操作：\cl{evaluer(const ZoneDeJeu\&)} 与
+\cl{description()}。四个具体子类分别实现斜线/L 型、三同资源、物件对、物件三异。
+\cl{ObjectifCompose} 持有一组子目标并递归求和——这正是组合模式：
+调用方无法也不需要区分「单个条件」与「条件组合」。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}
+\begin{class}{Objectif}{0,0}
+\attribute{- id : int}
+\operation{\underline{+ evaluer(zone) : int}}
+\operation{\underline{+ description() : string}}
+\end{class}
+\begin{class}{ObjectifCompose}{-7.6,-4.6}
+\attribute{- enfants : vector}
+\operation{+ ajouter(o)}
+\end{class}
+\begin{class}{ObjectifMotif}{-3.0,-5.2}
+\attribute{- royaume : Ressource}
+\attribute{- diagonale : bool}
+\end{class}
+\begin{class}{ObjectifSerie}{3.2,-5.2}
+\attribute{- royaume : Ressource}
+\end{class}
+\begin{class}{ObjectifObjets}{7.6,-4.6}
+\attribute{- objet : Ressource}
+\end{class}
+\draw[-{Triangle[open]}] (ObjectifCompose.north) -- (Objectif.south -| ObjectifCompose.north);
+\draw[-{Triangle[open]}] (ObjectifMotif.north) -- (Objectif.south -| ObjectifMotif.north);
+\draw[-{Triangle[open]}] (ObjectifSerie.north) -- (Objectif.south -| ObjectifSerie.north);
+\draw[-{Triangle[open]}] (ObjectifObjets.north) -- (Objectif.south -| ObjectifObjets.north);
+\node[font=\scriptsize] at (-7.6,-3.4) {1..*};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{目标层次：\cl{ObjectifCompose}（内部聚合 1..* 个 \cl{Objectif}）与四个叶子类}
+\label{fig:objectif}
+\end{figure}
+
+\subsection{棋盘、牌堆与玩家}
+\cl{ZoneDeJeu} 内部有两份数据：\cl{std::map<Coordonnee, std::size\_t> grille}
+记录「每个格子属于第几张牌」，\cl{std::vector<CartePlacee> liste} 记录已放牌
+（左上角坐标、牌对象、正反面、覆盖了几个角）。一张牌的四个角就是它的四个格子；
+某个角「可见」当且仅当该格仍属于这张牌。三条规则由此自然成立：
+\begin{itemize}
+\item 只能放在已有牌的\textbf{对角}相邻格，否则会同时覆盖两张牌的两个角，非法；
+\item 「缺失角」（\cl{CACHE}）永远不能覆盖；
+\item 每次放牌后资源自动重算，因此「盖上资源」的代价自然出现。
+\end{itemize}
+\cl{Pioche} 管理两个牌堆与 4 张明牌（2 资源 + 2 镀金），并提供
+\cl{prendreEtalee} / \cl{piocherSurLeTas} / \cl{completerEtalees}。
+\cl{Joueur} 聚合区域、手牌、秘密目标与分数；
+\cl{Partie} 聚合玩家数组、牌堆、2 张公共目标与回合状态。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}
+\begin{class}{Partie}{0,0}
+\attribute{- joueurs : vector<Joueur>}
+\attribute{- piocheCartes : Pioche}
+\attribute{- objectifsCommuns[2]}
+\attribute{- indexCourant, toursRestants : int}
+\operation{+ jouerCarte(i,pos,recto)}
+\operation{+ piocher(source,indice)}
+\operation{+ gagnant() : int}
+\end{class}
+\begin{class}{Joueur}{-6.6,-6.6}
+\attribute{- zoneJeu : ZoneDeJeu}
+\attribute{- cartesMain : vector}
+\attribute{- objectifRetenu}
+\attribute{- points : int}
+\end{class}
+\begin{class}{Pioche}{6.2,-6.6}
+\attribute{- tasRessource, tasDoree}
+\attribute{- etalees[4]}
+\operation{+ completerEtalees()}
+\end{class}
+\begin{class}{ZoneDeJeu}{-6.6,-11.4}
+\attribute{- grille : map}
+\attribute{- liste : vector}
+\operation{+ placementValide(...) : bool}
+\operation{+ ressourcesVisibles() : map}
+\end{class}
+\draw[-{Latex}] (Partie.south -| Joueur.north) -- node[font=\scriptsize, left, pos=0.6] {1..4} (Joueur.north);
+\draw[-{Latex}] (Partie.south -| Pioche.north) -- node[font=\scriptsize, right, pos=0.6] {1} (Pioche.north);
+\draw[-{Latex}] (Joueur.south) -- node[font=\scriptsize, right] {1} (ZoneDeJeu.north);
+\end{tikzpicture}
+\end{adjustbox}
+\caption{引擎核心：\cl{Partie} 聚合 1..4 个 \cl{Joueur} 与 1 副 \cl{Pioche}，\cl{Joueur} 聚合 1 个 \cl{ZoneDeJeu}}
+\label{fig:engine}
+\end{figure}
+
+\newpage
+\subsection{卡表与编码}
+卡表以 C++ 静态数组形式编入（\cl{src/modele/DonneesCartes.cpp}），运行时不读任何文件，
+因此不需要 JSON 解析库。每条记录描述一张牌：
+
+\begin{lstlisting}
+struct DonneeCarte {
+    int id;                    // 1..40 ressource, 41..80 doree, 81..86 initiale
+    Ressource royaume;         // royaume de la carte
+    int categorie;             // CATEGORIE_RESSOURCE / DOREE / INITIALE
+    DonneeFace recto, verso;   // 4 coins + 0..3 ressources permanentes
+    int score;                 // points de banniere
+    TypeScoreDore typeScore;   // AUCUN / STATIQUE / PAR_ANGLE / PAR_OBJET
+    Ressource objetScore;      // objet compte pour PAR_OBJET
+    int exigences[4];          // nombre exige de chaque royaume
+};
+\end{lstlisting}
+
+角上的符号用字符编码：P 植物、A 动物、C 真菌、I 昆虫、f 羽毛、j 墨水瓶、s 羊皮纸、
+点号表示可见空角、井号表示缺失角。测试 \cl{tests/test\_cartes.cpp} 用 14 条断言核对整张表：
+86 张牌、16 个目标、每王国 10 张资源牌、12 张 1 分资源牌、16 张固定分镀金牌、
+12 张按角、12 张按物件。
+
+\subsection{代码规模与文件职责}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.8cm}p{3.0cm}p{8.2cm}}
+\toprule
+目录 & 规模 & 职责 \\
+\midrule
+\cl{src/noyau} & 11 文件 / 302 行 & 资源枚举与符号、坐标、随机数、异常层次、洗牌模板 \\
+\cl{src/modele} & 36 文件 / 2706 行 & 卡牌与目标层次、棋盘、牌堆、玩家、引擎、卡表、AI \\
+\cl{src/vue} & 4 文件 / 312 行 & \cl{Vue} 接口与控制台实现 \\
+\cl{src/controleur} & 10 文件 / 623 行 & 菜单、主循环、输入适配、自动回合、批量模拟 \\
+\cl{src/main.cpp} & 126 行 & 命令行参数与模式选择 \\
+\cl{tests} & 8 文件 / 534 行 & 断言宏、测试工具、五个测试文件 \\
+\midrule
+合计 & 70 文件 / 4603 行 & 源码 4069 行 + 测试 534 行 \\
+\bottomrule
+\end{tabular}
+\caption{代码规模与各目录职责}
+\label{tab:taille}
+\end{table}
+模型层占比约三分之二，符合「规则是项目的核心」这一判断；
+界面与控制层加起来不到四分之一，说明业务逻辑没有被界面代码淹没。
+
+\section{设计模式的应用}
+表 \ref{tab:patterns} 汇总七个模式的落点，随后逐条说明收益。
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.8cm}p{5.6cm}p{6.4cm}}
+\toprule
+模式 & 本项目中的类 & 解决的问题 \\
+\midrule
+Template Method & \cl{Carte::pointsAuPose}、\cl{VueConsole} 的渲染骨架 & 固定算法骨架，变化点下放子类 \\
+Strategy & \cl{StrategieIA}：\cl{IAHasard}、\cl{IAGloutonne}、\cl{IAObjectifs} & 运行期切换 AI 算法，新增 AI 不改引擎 \\
+Factory Method & \cl{FabriqueCartes}（3 个子类）\newline \cl{FabriqueObjectif}（5 个子类） & 创建与使用分离 \\
+Singleton & \cl{CatalogueCartes} & 全应用唯一只读卡库 \\
+Iterator & \cl{IterateurCartes} & 不暴露内部结构即可遍历棋盘 \\
+Adapter & \cl{AdaptateurFlux} & 同一控制器读键盘或读脚本文件 \\
+Composite & \cl{Objectif} / \cl{ObjectifCompose} & 单条件与条件组合统一处理 \\
+\bottomrule
+\end{tabular}
+\caption{七个设计模式在本项目中的落点}
+\label{tab:patterns}
+\end{table}
+
+\subsection{Template Method：计分与显示}
+计分骨架（取固定分 $\rightarrow$ 加上可变分）只在 \cl{Carte::pointsAuPose} 写一次。
+镀金牌的三种计分方式（固定、按角、按物件）都只是重写 \cl{pointsVariables}；
+资源牌只重写 \cl{pointsFixes}。显示层同样使用模板方法：\cl{VueConsole::afficherZone}
+固定执行「标题 $\rightarrow$ 角标网格 $\rightarrow$ 已放牌清单 $\rightarrow$ 资源统计」，
+子步骤由私有函数实现，将来换成图形界面只需实现 \cl{Vue} 接口。
+
+\subsection{Strategy：三种 AI}
+\cl{StrategieIA} 声明唯一的操作 \cl{choisirAction(const Partie\&, int)}，三个子类分别是：
+\begin{itemize}
+\item \cl{IAHasard}：在所有合法落点中随机选一个，抽牌也随机；
+\item \cl{IAGloutonne}：逐张牌、逐面、逐落点模拟，取「即时分 $\times 10$ + 资源种类数」最大者；
+\item \cl{IAObjectifs}：在贪心基础上再加上「目标增益 $\times 6$」与「同王国邻接数 $\times 3$」，
+      因此会主动为斜线/L 图案铺路。
+\end{itemize}
+\cl{Partie} 只持有 \cl{std::shared\_ptr<StrategieIA>}，换 AI 只是换对象；
+这正是课件所说「用对象表示算法」的做法，本项目没有使用 lambda 或函数指针。
+
+\subsection{Factory Method 与 Singleton}
+\cl{FabriqueCartes} 有三个子类，分别生产资源牌、镀金牌、初始牌；
+\cl{FabriqueObjectif} 有五个子类，每个负责一种目标卡。目录类
+\cl{CatalogueCartes} 是单例：私有构造、静态指针、\cl{instance()} 首次调用时创建，
+内部持有 \cl{map<int, shared\_ptr<const Carte>>} 与 \cl{map<int, shared\_ptr<const Objectif>>}，
+并对外提供 \cl{creerCarte(id)}、\cl{creerObjectif(id)} 这样的参数化工厂方法。
+单例的写法与课件第 104 页一致（\cl{donneInstance()}、私有构造、静态指针）。
+
+\subsection{Iterator 与 Adapter}
+\cl{IterateurCartes} 提供 \cl{premier/estFini/courant/suivant} 四个操作，
+显示层与目标计算都通过它遍历棋盘，不需要知道内部使用的是 \cl{map} 还是别的容器。
+\cl{AdaptateurFlux} 把 \cl{std::istream} 适配成 \cl{Saisie} 接口，于是同一份
+\cl{ControleurPartie} 既能读键盘，也能重放 \cl{scripts/demo\_entree.txt} 中的脚本——
+演示视频的「确定性演示」和自动化测试都依赖它。
+
+\subsection{Composite}
+一张目标卡可能同时包含多个图案条件。\cl{ObjectifCompose} 持有一组
+\cl{shared\_ptr<const Objectif>}，\cl{evaluer} 递归求和；
+调用方对单个条件与组合条件一视同仁，新增「复合目标卡」不需要改结算代码。
+
+\section{关键算法}
+
+\subsection{放置合法性}
+给定新牌、目标格 $(x,y)$ 与正反面，算法如下：
+\begin{enumerate}
+\item 对四个格子：若已被占用，找到其主人与对应角；若该角是缺失角，拒绝；
+\item 若四个格子全部为空，拒绝（必须覆盖至少一个可见角）；
+\item 若同一张牌被覆盖两个角，拒绝（在 $2\times2$ 模型下这等价于正交相邻）；
+\item 若为镀金牌且玩的是正面：检查场上可见资源是否满足需求。
+\end{enumerate}
+伪代码：
+\begin{lstlisting}
+bool placementValide(pos, carte, recto) const {
+    int representants = 0;
+    std::map<size_t,int> coinsParCarte;
+    for (int coin = 0; coin < 4; ++coin) {
+        Coordonnee c = caseDuCoin(pos, coin);
+        if (caseLibre(c)) continue;
+        ++representants;
+        const CartePlacee& autre = *carteSur(c);
+        int coinTouche = coinDepuisDecalage(c.x - autre.origine.x, c.y - autre.origine.y);
+        if (!coinUtilisable(autre.carte->face(autre.recto).coin(coinTouche))) return false;
+        ++coinsParCarte[indice(autre)];
+    }
+    if (representants == 0) return false;
+    // aucun doublon de carte + exigences de la carte doree
+}
+\end{lstlisting}
+
+\subsection{可见资源与物件}
+遍历已放牌：对每个角，若该格仍属于这张牌则计入符号；再加上该面的中央永久资源。
+镀金牌「每物件 1 分」必须在放牌瞬间结算一次，之后不再重算——这一点由
+\cl{ContextePose} 的快照实现：\cl{Partie} 在放牌后立刻调用
+\cl{symbolesVisibles()} 并把结果放进 \cl{ContextePose} 传给 \cl{pointsAuPose}。
+
+\subsection{目标计分}
+斜线与 L 型是\textbf{几何}目标：把同王国牌的左上角坐标放进 \cl{std::set}，
+按「从上到下、从左到右」的固定顺序贪心取不重叠的三元组；斜线有两个方向，
+L 型由「两个互相垂直的对角步」构成（4 个方向）。贪心保证确定性与「每张牌只用一次」。
+三同资源、物件对、物件三异是\textbf{计数}目标：统计可见符号数后做整除。
+两个公共目标与秘密目标分别计算，最后相加。
+
+\subsection{AI 决策}
+候选动作数为「手牌数 $\times$ 2 面 $\times$ 候选格数」，候选格数约为已放牌数的 4 倍
+（每张牌四个对角格），因此单次决策在毫秒级。评分函数见表 \ref{tab:ia}。
+为避免偷看信息，AI 只读取公有接口：自己的手牌、所有可见区域、公共目标与自己持有的秘密目标。
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{3.2cm}p{9.6cm}}
+\toprule
+AI & 评分函数（越大越好） \\
+\midrule
+\cl{IAHasard} & 均匀随机取一个合法动作 \\
+\cl{IAGloutonne} & $10 \times$ 即时分 $+$ 资源种类数 \\
+\cl{IAObjectifs} & $10 \times$ 即时分 $+ 6 \times$ 目标增益 $+ 2 \times$ 资源种类数 $+ 3 \times$ 同王国对角邻接数 \\
+抽牌策略 & 评估 4 张明牌（镀金牌基础分更高、角上资源更多者优先），否则从资源/镀金堆抽取 \\
+\bottomrule
+\end{tabular}
+\caption{三种 AI 的评分函数}
+\label{tab:ia}
+\end{table}
+
+\subsection{终局与平局}
+触发条件：任意玩家分数 $\ge 20$，或两个牌堆都空。触发后引擎计算
+\cl{toursRestants = (本轮剩余玩家) + 玩家人数}，每完成一个回合减一，归零即结算。
+结算依次计算：牌面分（已累计）、公共目标 1、公共目标 2、秘密目标，得到总分；
+比较顺序为总分 $\rightarrow$ 目标分 $\rightarrow$ 并列。
+另外，若某玩家手上已无合法落点，引擎允许其「弃权」；连续弃权达到人数时提前结束，
+以避免死循环。
+
+\subsection{复杂度与性能}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.6cm}p{4.6cm}p{4.2cm}}
+\toprule
+操作 & 复杂度 & 说明 \\
+\midrule
+一次放置校验 & $O(1)$ & 只看四个格子 \\
+可见资源重算 & $O(n)$ & $n$ 为已放牌数（最多约 40） \\
+目标计分 & $O(n \log n)$ & 排序 + 贪心取三元组 \\
+AI 决策 & $O(n \cdot k \cdot 2 \cdot 4n)$ & $k$ 为手牌数（3） \\
+200 局自动对局 & 约 7 秒 & 4 名最高难度 AI \\
+\bottomrule
+\end{tabular}
+\caption{关键操作复杂度与实测性能}
+\label{tab:perf}
+\end{table}
+
+\subsection{异常与错误处理}
+模型层用异常表达「动作被拒绝」，控制器是唯一捕获它们的地方：
+捕获后显示原因并让玩家重新输入，对局状态不变（校验全部在修改之前完成）。
+异常层次如下：
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{3.6cm}p{3.0cm}p{8.0cm}}
+\toprule
+异常类 & 典型触发 & 面向玩家的消息（示例） \\
+\midrule
+\cl{PlacementInvalide} & 落点非法 & la carte doit recouvrir au moins un coin visible \\
+ &  & la carte recouvrirait deux coins de la meme carte \\
+ &  & le coin vise par la carte R17 est cache \\
+\cl{RessourcesInsuffisantes} & 镀金资源不足 & D55 : exige 3 plante 1 animal \\
+\cl{CarteAbsente} & 手牌下标非法、明牌已被取走 & indice de carte en main invalide \\
+\cl{SaisieInvalide} & 输入不是数字或越界 & ce n'est pas un nombre : abc \\
+\cl{PartieTerminee} & 终局后继续操作 & la partie est terminee \\
+\cl{IdentifiantInconnu} & 卡表/目标 id 不存在 & carte inconnue : 999 \\
+\bottomrule
+\end{tabular}
+\caption{异常层次与典型消息}
+\label{tab:exceptions}
+\end{table}
+
+值得强调的是「异常安全」：\cl{Partie::jouerCarte} 先完成全部校验（放置规则、资源需求、
+手牌范围），只有全部通过后才修改分数、手牌和棋盘。因此任何一次被拒绝的动作都不会留下
+「扣了牌却没放上去」这类半完成状态——这也是为什么测试可以直接反复尝试非法输入。
+

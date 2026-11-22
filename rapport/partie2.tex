@@ -1,0 +1,295 @@
+\section{可扩展性论证}
+
+\subsection{新增一个 AI}
+\begin{lstlisting}
+class IAExperte : public StrategieIA {
+public:
+    explicit IAExperte(GenerateurAleatoire& g) : generateur(&g) {}
+    ActionTour choisirAction(const Partie& partie, int indice) { /* ... */ }
+    std::string nom() const { return "IA experte"; }
+private:
+    GenerateurAleatoire* generateur;
+};
+// dans creerStrategie(int niveau, ...) : un test de plus, une ligne
+\end{lstlisting}
+\textbf{不改}：\cl{Partie}、\cl{Joueur}、\cl{ZoneDeJeu}、\cl{VueConsole}、控制器。
+
+\subsection{新增一种目标卡}
+新增 \cl{ObjectifMotifCroix : Objectif} 与 \cl{FabriqueObjectifCroix : FabriqueObjectif}，
+在 \cl{CatalogueCartes} 构造函数里多注册一个 \cl{TypeObjectif::CROIX} 分支，
+数据表里多两行。\textbf{不改}结算代码，因为 \cl{Partie::pointsObjectifs} 只调用
+\cl{Objectif::evaluer}。
+
+\subsection{新增一类牌}
+例如扩展「灵魂牌」：新增 \cl{CarteEsprit : Carte} 与对应 \cl{FabriqueCarteEsprit}，
+在 \cl{DonneesCartes.h} 里加一个 \cl{CATEGORIE\_ESPRIT} 常量，数据表加若干条。
+\textbf{不改}：计分（模板方法自动复用）、放置规则、显示（都是对 \cl{Carte} 抽象操作）。
+
+\subsection{新增一种显示方式}
+实现 \cl{Vue} 接口（例如彩色终端界面或图形界面），在 \cl{main} 里替换对象。
+\textbf{不改}模型层任何代码。
+
+\subsection{接入官方单人模式（Tybor）}
+官方单人模式使用专属卡组与计分表。做法：新增 \cl{StrategieTybor : StrategieIA} 与一份
+单人卡组数据；\cl{Partie} 的回合、放置、计分流程完全复用。这正是作业要求
+「架构易于整合新组件、新 AI」的直接体现。
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.8cm}p{6.2cm}p{5.2cm}}
+\toprule
+扩展 & 需要新增 & 需要修改的既有代码 \\
+\midrule
+新 AI & \cl{IAExperte}（实现 \cl{StrategieIA}） & \cl{creerStrategie} 加一行 \\
+新目标类型 & \cl{ObjectifX} + \cl{FabriqueObjectifX} & 目录注册一行 \\
+新牌类 & \cl{CarteX} + 数据表条目 & 无 \\
+新显示 & \cl{VueGraphique : Vue} & \cl{main} 换一个对象 \\
+官方单人模式 & \cl{StrategieTybor} + 单人卡组数据 & 无 \\
+存档 / 悔棋 & \cl{Memento} 类（未实现） & \cl{Partie} 增加保存/恢复接口 \\
+\bottomrule
+\end{tabular}
+\caption{扩展场景与改动范围}
+\label{tab:extensions}
+\end{table}
+
+\section{项目计划与实际执行}
+
+\subsection{任务分解与排期}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.0cm}p{7.0cm}p{2.5cm}p{2.2cm}}
+\toprule
+周次 & 任务 & 依赖 & 状态 \\
+\midrule
+第 1--2 周 & 读规则、试玩、整理 86 张牌的数据表与计分规则 & --- & 完成 \\
+第 3 周 & 架构设计：分层、模式选型、UML 草图、接口定稿 & 数据表 & 完成 \\
+第 4 周 & \cl{noyau} + 卡牌层次 + 单例目录 + 工厂 & 架构 & 完成 \\
+第 5 周 & 棋盘几何、放置校验、可见资源与物件 & 卡牌 & 完成 \\
+第 6 周 & 目标计分、终局判定、单元测试骨架 & 棋盘 & 完成 \\
+第 7 周 & 控制台界面、控制器、脚本演示、三种 AI & 引擎 & 完成 \\
+第 8 周 & 报告、UML 图、视频、打包与提交 & 全部 & 完成 \\
+\bottomrule
+\end{tabular}
+\caption{计划与实际执行（测试从第 6 周起持续回归）}
+\label{tab:planning}
+\end{table}
+
+\subsection{风险与应对}
+\begin{itemize}
+\item \textbf{规则歧义}：目标卡的图案方向在原版图示中不完全清晰。应对：按「两次垂直对角步」
+      实现 L 型，并把解释写入 \cl{docs/REGLES\_OBJECTIFS.md}；若需调整，只需新增一个
+      \cl{Objectif} 子类。
+\item \textbf{中文排版}：报告用 XeLaTeX + ctex，先做最小样例验证字体与 UML 宏包可用，
+      再正式撰写，避免最后一天才发现编译问题。
+\item \textbf{过度设计}：课程讲了十余个模式，本项目只保留真正被用到的七个，
+      「不加功能就不加类」。
+\item \textbf{死循环}：曾有「所有玩家都无合法落点」导致对局无法结束的问题；
+      加入连续弃权计数与轮次上限后消除。
+\end{itemize}
+
+\subsection{回顾}
+实际执行比计划多花了两天，主要用在两处：一是把「$2\times2$ 格子」的几何模型推清楚
+（包括 L 型图案该如何在斜格上定义），二是把 \cl{Partie} 的异常安全语义做扎实
+（校验全部前置，失败不修改状态）。这两处投入在后期写测试时得到了回报。
+
+\section{个人分工与工作量}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.2cm}p{4.4cm}p{3.2cm}p{1.5cm}p{1.8cm}}
+\toprule
+成员 & 主要负责部分 & 交付物 & 贡献占比 & 工时（小时） \\
+\midrule
+【成员 A】 & 卡表整理、卡牌层次、单例与工厂 & 代码、数据核对 & 【XX\%】 & 【XX】 \\
+【成员 B】 & 棋盘几何、放置规则、可见资源 & 代码、测试 & 【XX\%】 & 【XX】 \\
+【成员 C】 & 目标计分、终局结算、三种 AI & 代码、测试 & 【XX\%】 & 【XX】 \\
+【成员 D】 & 控制台界面、控制器、脚本演示 & 代码、视频 & 【XX\%】 & 【XX】 \\
+【成员 E】 & 架构文档、报告、UML 图 & 报告、PPT & 【XX\%】 & 【XX】 \\
+\midrule
+合计 & & & 100\% & 【总工时】 \\
+\bottomrule
+\end{tabular}
+\caption{分工与工时（提交前按真实情况填写）}
+\label{tab:contrib}
+\end{table}
+
+\section{测试与验证}
+
+\subsection{测试方法}
+不引入第三方框架：\cl{tests/harnais.h} 用三个宏（相等、为真、抛异常）实现断言，
+按模块划分为 5 个文件（卡表、棋盘、目标、引擎、AI）。运行方式：
+\begin{lstlisting}
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1
+#   Compilation du jeu... / Compilation des tests... / Execution des tests...
+#   207 verifications, 0 echec(s).   TOUS LES TESTS PASSENT
+powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
+#   Aucune fonctionnalite hors cours detectee
+\end{lstlisting}
+
+\subsection{测试明细}
+\begin{longtable}{p{3.6cm}p{2.6cm}p{7.6cm}}
+\toprule
+测试文件 & 断言数 & 覆盖内容 \\
+\midrule
+\cl{test\_cartes.cpp} & 14 & 86 张牌、16 目标、每王国 10 张、12 张 1 分、16/12/12 三类镀金、非法 id 抛异常 \\
+\cl{test\_zone.cpp} & 13 & 空区、对角放置、隔离放置拒绝、缺失角拒绝、重叠拒绝、双角覆盖合法、覆盖后资源减少、迭代器计数 \\
+\cl{test\_objectifs.cpp} & 12 & 斜线、L、混合王国无效、三同资源、物件对、三异、组合目标求和 \\
+\cl{test\_partie.cpp} & 12 & 开局手牌、准备阶段不可放牌、先放后抽、终局、总分 = 牌面 + 目标、胜者合法 \\
+\cl{test\_ia.cpp} & 12 局 & 1--4 人 $\times$ 3 难度完整对局，分数与总量一致性 \\
+\midrule
+合计 & 207 次断言 & 见上 \\
+\bottomrule
+\caption{单元与集成测试明细}
+\label{tab:tests}
+\end{longtable}
+
+\subsection{稳定性与可复现性}
+\cl{GenerateurAleatoire} 是自写的线性同余发生器（不使用随机设备），
+因此「同一种子 $\Rightarrow$ 同一局」完全成立。批量验证：
+\begin{lstlisting}
+codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
+# 200 partie(s) terminee(s), environ 6200 tours joues, aucune exception
+\end{lstlisting}
+工程层面还做了两项检查：全部源文件在 \cl{-std=c++14} 与 \cl{-std=c++17} 下编译，
+并开启 \cl{-Wall -Wextra -pedantic}，结果均为零警告。
+
+\section{界面流程与使用体验}
+题目允许只用控制台，但要求「画面足以看懂局面」。本项目的界面分三个环节，
+每一步都只用文本表格与固定列宽（\cl{iomanip}），不依赖颜色或终端控制字符。
+
+\subsection{开局}
+\cl{Menu} 依次询问人数（1--4）、每个座位的姓名、真人或电脑（以及电脑难度）、随机种子。
+随后进入准备阶段，逐位玩家显示自己的初始牌正反两面（四个角的符号与中央永久资源），
+再显示两张候选秘密目标的文字描述，让玩家二选一。这些询问都可以用一个文本文件重放
+（\cl{--entree}），因此同一场演示可以精确复现。
+
+\subsection{回合}
+每次轮到真人玩家时，界面按固定顺序打印四块信息：
+\begin{enumerate}
+\item 局面：所有玩家分数、两个牌堆剩余张数、当前玩家、当前该做什么（放牌还是抽牌）；
+\item 自己的手稿：以坐标网格显示的角标矩阵（每个格一个符号），后面跟「已放牌清单」
+      （每张牌的编号、位置、正反面、四角符号、中央资源、覆盖了几个角）；
+\item 自己的手牌：每张牌的正反面符号与需求说明；
+\item 桌面中央的 4 张明牌。
+\end{enumerate}
+然后程序只列出**当前合法**的落点（编号 + 坐标），玩家输入编号即可，无需自己算坐标。
+若输入非法（例如手牌编号越界、或者该牌此刻无法放置），程序给出原因并重新询问，
+不会中断对局。
+
+\subsection{终局}
+触发终局后先打印最后几回合的提示，再输出结果表：每位玩家的「牌面分 / 目标分 / 总分」，
+最后一行给出胜者或「平局」。若总分相同则按目标分比较，这一点在结果表里可以直接看出来。
+
+\subsection{可读性取舍}
+做过两个取舍：其一，\textbf{不画牌的美术图案}，只画四个角与中央资源，
+因为「能不能放、能拿几分」完全由这些符号决定；其二，\textbf{不隐藏信息}，
+所有区域与手牌都完整显示，因为本地同一台机器对战没有信息隐藏的必要。
+这两点都在 \cl{docs/REGLES\_OBJECTIFS.md} 中记录为「有意为之的简化」。
+
+\section{结论与展望}
+本项目用课程所讲的 C++ 完成了 Codex Naturalis 的完整实现：规则正确、博弈完整、
+可复现、可扩展。三个最关键的设计决定是：
+（1）模型层零输入输出，使引擎可被脚本与测试直接驱动；
+（2）依赖抽象类型（\cl{Carte}、\cl{Objectif}、\cl{StrategieIA}、\cl{Vue}），
+使扩展只需新增子类；
+（3）用数据表 + 工厂把「86 张牌」与「规则代码」彻底分离。
+后续可以继续做：官方单人 Tybor 模式、图形界面、存档（Memento）、
+以及更多扩展牌与新的目标类型。
+
+\appendix
+\section{编译与运行}
+\begin{lstlisting}
+# Prerequis : MinGW (GCC) fourni avec CLion, PowerShell
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1
+.\build\codex_naturalis.exe                              # mode interactif
+.\build\codex_naturalis.exe --aide                       # liste des options
+.\build\codex_naturalis.exe --auto 20 --joueurs 4 --niveau 3   # mode automatique
+.\build\codex_naturalis.exe --entree scripts\demo_entree.txt   # demonstration scriptee
+.\build\codex_tests.exe                                  # tests unitaires seuls
+\end{lstlisting}
+\cl{CMakeLists.txt} 也已提供；用 CLion 打开 \cl{code/} 目录即可直接构建。
+
+\section{控制台界面示例}
+下面是一次真实运行的片段（脚本演示，节选自 \cl{scripts/demo\_entree.txt} 的回放）：
+\begin{lstlisting}
+Objectifs communs :
+  [93] 3 pts par L de animal
+  [97] 2 pts par 3 symboles animal
+------------------------------------------------------------------------
+Scores : Alice=0 Bob=0   |   Pioche : ressources 34, dorees 36
+Tour de : Alice   etat : il faut poser une carte
+Codex de Alice :
+     0  1   <- x
+  0  C  A
+  1  P  I
+Cartes posees :
+  1) I86 en (0,0) recto  HG=C HD=A BG=P BD=I [-]
+Ressources visibles : plante 1, animal 1, champignon 1, insecte 1
+Main de Alice :
+  [1] R15 (plante)
+      recto HG=# HD=I BG=f BD=P [-]   |   verso HG=. HD=. BG=. BD=. [plante]
+  [2] R2 (champignon)
+      recto HG=C HD=. BG=# BD=. [-]   |   verso HG=. HD=. BG=. BD=. [champignon]
+  [3] D55 (plante) +2 pts par coin recouvert | exige 3 plante 1 animal
+      recto HG=. HD=. BG=. BD=# [-]   |   verso HG=. HD=. BG=. BD=. [plante]
+\end{lstlisting}
+
+\section{游戏规则速查（实现所依据的规则）}
+\begin{longtable}{p{3.4cm}p{10.6cm}}
+\toprule
+环节 & 规则 \\
+\midrule
+组件 & 40 张资源牌、40 张镀金牌、6 张初始牌、16 张目标牌、记分轨、玩家标记 \\
+准备 & 洗两副牌，各亮出 2 张；每人随机一张初始牌并选正反面放在面前；
+每人抽 2 张资源牌 + 1 张镀金牌；亮 2 张公共目标；每人看 2 张目标牌选 1 张作秘密目标 \\
+回合 & ① 从手牌（3 张）放 1 张到自己的区域；② 从 4 张明牌或任一副牌堆顶抽 1 张 \\
+放置 & 必须覆盖已有牌的一个可见角；不能覆盖同一张牌的两个角；缺失角不能覆盖 \\
+镀金牌 & 正面要求场上已有指定资源；资源不足时只能把牌翻到背面（4 空角 + 1 永久资源） \\
+即时得分 & 资源牌横幅（0 或 1 分）；镀金牌固定分（3/5）、每覆盖角 2 分、每物件 1 分（放置瞬间结算一次） \\
+终局 & 有人 $\ge$ 20 分或两副牌堆抽空：补完本轮，每人最后一回合 \\
+结算 & 每人算 2 张公共目标 + 1 张秘密目标的分，加到牌面分上；同一张牌在同一目标内只算一次 \\
+胜负 & 总分高者胜；平局比目标分；仍平则并列 \\
+\bottomrule
+\end{longtable}
+
+\section{课件覆盖对照（不超纲的书面证明）}
+\label{sec:portee}
+\begin{longtable}{p{4.0cm}p{6.6cm}p{4.0cm}}
+\toprule
+课件内容 & 本项目用法 & 主要位置 \\
+\midrule
+类、封装、UML & 全部模型类、三张类图 & \cl{src/modele/}、第 4 节 \\
+构造/析构、初始化列表、虚析构 & \cl{Carte}、\cl{CartePlacee}、接口基类 & \cl{Carte.h}、\cl{Vue.h} \\
+静态成员、单例写法 & \cl{CatalogueCartes::instance} & \cl{CatalogueCartes.cpp} \\
+运算符重载 & \cl{Coordonnee::operator==} 与 \cl{operator<} & \cl{noyau/} \\
+自定义异常、try/catch & \cl{ExceptionJeu} 及其六个子类 & \cl{noyau/ExceptionJeu.*} \\
+智能指针 & \cl{shared\_ptr}、\cl{make\_shared}、\cl{make\_unique} & 全项目 \\
+继承、多态、抽象类 & \cl{Carte}、\cl{Objectif}、\cl{StrategieIA}、\cl{Vue} & \cl{src/modele/}、\cl{src/vue/} \\
+函数模板 & \cl{melanger}、测试断言宏 & \cl{noyau/Melange.h}、\cl{tests/} \\
+STL 容器/算法/迭代器 & \cl{vector}、\cl{map}、\cl{set}、\cl{std::swap}、自写迭代器 & \cl{ZoneDeJeu}、\cl{IterateurCartes} \\
+iostream / iomanip / fstream & 控制台格式、\cl{--entree} 读脚本 & \cl{VueConsole}、\cl{main.cpp} \\
+七个设计模式 & 第 5 节 & \cl{src/} \\
+\bottomrule
+\end{longtable}
+\textbf{明确未使用的特性}：lambda、\cl{std::function}、\cl{optional/variant/any/string\_view}、
+\cl{filesystem}、ranges/concepts/modules/coroutines、结构化绑定、\cl{if constexpr}、折叠表达式、
+线程与互斥量、\cl{regex}、\cl{chrono}、\cl{format}、\cl{printf}/\cl{malloc}、\cl{goto}、
+任何第三方库。\cl{scripts/check\_scope.ps1} 逐条检查这些关键字，结果为 0 处。
+
+\section{卡表统计}
+\begin{longtable}{lll}
+\toprule
+牌类 & 数量 & 说明 \\
+\midrule
+资源牌 & 40 & 每王国 10 张，其中 12 张带 1 分横幅 \\
+镀金牌 & 40 & 16 张固定分（3/5）、12 张「每覆盖角 2 分」、12 张「每物件 1 分」 \\
+初始牌 & 6 & 正反两面不同，背面含 1--3 个中央永久资源 \\
+目标牌 & 16 & 4 斜线（2 分）、4 L 型（3 分）、4 三同资源（2 分）、4 物件（2 分 / 三异 3 分） \\
+\midrule
+合计 & 102 & 40 + 40 + 6 + 16 \\
+\bottomrule
+\end{longtable}
+
+\end{document}
