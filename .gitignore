@@ -1,0 +1,22 @@
+# --- compilation ---
+build/
+*.o
+*.obj
+*.exe
+*.out
+
+# --- artefacts LaTeX ---
+rapport/*.aux
+rapport/*.log
+rapport/*.out
+rapport/*.toc
+rapport/*.synctex.gz
+
+# --- livrables generes (on ne versionne que les sources) ---
+Projet/
+Projet.zip
+
+# --- IDE ---
+.vscode/
+.idea/
+cmake-build-*/
