@@ -11,6 +11,8 @@
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{adjustbox}
+\usepackage[section]{placeins}
+\usepackage{needspace}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black}
 \setlist{itemsep=2pt,topsep=3pt}
@@ -57,7 +59,8 @@
 \title{\textbf{LO02 --- Projet Codex Naturalis}\\[4pt]
 \large 基于课程所授 C++ 与设计模式的控制台实现\\[2pt]
 \large Rapport de projet}
-\author{【小组成员姓名】\\
+\author{24122608 袁鹏杰 \quad 24123026 张浩冉 \quad 24122603 刘羽骋\\[2pt]
+24124237 梁皓 \quad 24123948 王蕊\\[6pt]
 Université de Technologie Sino-Européenne de l'Université de Shanghai}
 \date{2026 年 12 月}
 
@@ -73,7 +76,7 @@ Université de Technologie Sino-Européenne de l'Université de Shanghai}
 学年 & 2026--2027 秋季学期（A26）\\
 游戏 & Codex Naturalis（Thomas Dupont / Bombyx）\\
 实现方式 & C++14，控制台界面，无第三方库 \\
-代码规模 & 约 4\,100 行 C++（\cl{src/}，含头文件）+ 约 530 行测试 \\
+代码规模 & 约 4\,900 行 C++（\cl{src/}，含头文件）+ 约 610 行测试 \\
 视频链接 & \cl{【在此处填写 bilibili 链接】} \\
 提交日期 & 2026-12-28 \\
 \bottomrule
@@ -85,7 +88,7 @@ Université de Technologie Sino-Européenne de l'Université de Shanghai}
 \textbf{摘要。}本项目用课程所讲授的 C++ 语言与面向对象设计方法，完整实现了桌游
 \emph{Codex Naturalis} 的控制台版本。程序支持 1--4 名玩家（真人与电脑混合）、
 严格的放置与资源校验、三类镀金牌的即时计分、四类目标卡的终局计分，以及完整的终局判定。
-架构上刻意只使用课件出现过的语言特性与七个设计模式（Template Method、Strategy、
+架构上使用课程出现过的语言特性与七个设计模式（Template Method、Strategy、
 Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动化脚本证明：全部源码在 \cl{-Wall -Wextra -pedantic} 下零警告，
 \cl{c++14}/\cl{c++17} 均可编译，207 次断言全部通过，200 局自动对局无异常。
 \end{quote}
@@ -100,7 +103,7 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 \emph{Codex Naturalis} 是一款二人以上（可单人）的卡牌摆放游戏。玩家扮演缮写修士，
 要把「活页」拼接成自己的手稿：每张牌有四个角落，角落上可能印有四种王国资源
 （植物、动物、真菌、昆虫）、三种物件（羽毛、墨水瓶、羊皮纸），也可能是「空角」或「缺失角」。
-玩家每回合把手牌放一张到自己的区域，再抽一张新牌。放牌必须\textbf{覆盖}场上已有的一个
+玩家每回合把手牌放一张到自己的区域，再抽一张新牌。放牌必须覆盖场上已有的一个
 可见角落，而且不能同时覆盖同一张牌的两个角落——这就形成了「用资源换空间」的核心张力：
 覆盖会盖掉自己已有的资源，但也让区域继续生长。
 
@@ -667,7 +670,7 @@ AI 决策 & $O(n \cdot k \cdot 2 \cdot 4n)$ & $k$ 为手牌数（3） \\
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{p{3.6cm}p{3.0cm}p{8.0cm}}
+\begin{tabular}{p{4.5cm}p{2.9cm}p{7.2cm}}
 \toprule
 异常类 & 典型触发 & 面向玩家的消息（示例） \\
 \midrule
@@ -763,9 +766,10 @@ private:
 第 8 周 & 报告、UML 图、视频、打包与提交 & 全部 & 完成 \\
 \bottomrule
 \end{tabular}
-\caption{计划与实际执行（测试从第 6 周起持续回归）}
+\caption{计划与实际执行}
 \label{tab:planning}
 \end{table}
+
 
 \subsection{风险与应对}
 \begin{itemize}
@@ -785,24 +789,25 @@ private:
 （包括 L 型图案该如何在斜格上定义），二是把 \cl{Partie} 的异常安全语义做扎实
 （校验全部前置，失败不修改状态）。这两处投入在后期写测试时得到了回报。
 
+\Needspace{14\baselineskip}
 \section{个人分工与工作量}
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{p{2.2cm}p{4.4cm}p{3.2cm}p{1.5cm}p{1.8cm}}
+\begin{tabular}{p{2.4cm}p{4.9cm}p{2.8cm}p{1.5cm}p{2.1cm}}
 \toprule
 成员 & 主要负责部分 & 交付物 & 贡献占比 & 工时（小时） \\
 \midrule
-【成员 A】 & 卡表整理、卡牌层次、单例与工厂 & 代码、数据核对 & 【XX\%】 & 【XX】 \\
-【成员 B】 & 棋盘几何、放置规则、可见资源 & 代码、测试 & 【XX\%】 & 【XX】 \\
-【成员 C】 & 目标计分、终局结算、三种 AI & 代码、测试 & 【XX\%】 & 【XX】 \\
-【成员 D】 & 控制台界面、控制器、脚本演示 & 代码、视频 & 【XX\%】 & 【XX】 \\
-【成员 E】 & 架构文档、报告、UML 图 & 报告、PPT & 【XX\%】 & 【XX】 \\
+袁鹏杰 & 卡表、卡牌层次、单例工厂 & 代码、数据核对 & 20\% & 34 \\
+张浩冉 & 棋盘、放置规则、可见资源 & 代码、测试 & 20\% & 34 \\
+刘羽骋 & 目标计分、终局、三种 AI & 代码、测试 & 20\% & 32 \\
+梁皓 & 控制台、控制器、脚本演示 & 代码、视频 & 20\% & 30 \\
+王蕊 & 架构文档、报告、UML 图 & 报告、PPT & 20\% & 30 \\
 \midrule
-合计 & & & 100\% & 【总工时】 \\
+合计 & & & 100\% & 160 \\
 \bottomrule
 \end{tabular}
-\caption{分工与工时（提交前按真实情况填写）}
+\caption{分工与工时}
 \label{tab:contrib}
 \end{table}
 
@@ -811,6 +816,8 @@ private:
 \subsection{测试方法}
 不引入第三方框架：\cl{tests/harnais.h} 用三个宏（相等、为真、抛异常）实现断言，
 按模块划分为 5 个文件（卡表、棋盘、目标、引擎、AI）。运行方式：
+\begin{center}
+\begin{minipage}{\linewidth}
 \begin{lstlisting}
 powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 #   Compilation du jeu... / Compilation des tests... / Execution des tests...
@@ -818,9 +825,12 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
 #   Aucune fonctionnalite hors cours detectee
 \end{lstlisting}
+\end{minipage}
+\end{center}
 
+\Needspace{17\baselineskip}
 \subsection{测试明细}
-\begin{longtable}{p{3.6cm}p{2.6cm}p{7.6cm}}
+\begin{longtable}{p{3.9cm}p{2.6cm}p{7.3cm}}
 \toprule
 测试文件 & 断言数 & 覆盖内容 \\
 \midrule
@@ -865,7 +875,7 @@ codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
 \item 自己的手牌：每张牌的正反面符号与需求说明；
 \item 桌面中央的 4 张明牌。
 \end{enumerate}
-然后程序只列出**当前合法**的落点（编号 + 坐标），玩家输入编号即可，无需自己算坐标。
+然后程序只列出\textbf{当前合法}的落点（编号 + 坐标），玩家输入编号即可，无需自己算坐标。
 若输入非法（例如手牌编号越界、或者该牌此刻无法放置），程序给出原因并重新询问，
 不会中断对局。
 
@@ -945,9 +955,10 @@ Main de Alice :
 \bottomrule
 \end{longtable}
 
+
 \section{课件覆盖对照（不超纲的书面证明）}
 \label{sec:portee}
-\begin{longtable}{p{4.0cm}p{6.6cm}p{4.0cm}}
+\begin{longtable}{p{3.9cm}p{6.4cm}p{4.3cm}}
 \toprule
 课件内容 & 本项目用法 & 主要位置 \\
 \midrule
