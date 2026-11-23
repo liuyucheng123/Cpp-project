@@ -17,6 +17,10 @@ Clear-Host
 字体调到 18–20 pt，窗口拖到约 110×38（版面按 72 列排，太窄会折行）。关掉微信/QQ 通知。
 录错了不要紧：游戏里按 `Ctrl+C` 就退出，重新跑一次即可（种子固定，局面完全一样）。
 
+> ⚠️ **别把 PowerShell 命令敲进游戏里。** 游戏运行时的提示符是 `>`，PowerShell 的提示符是 `PS D:\OneDrive\桌面\Cpp-project>`。
+> 只有看到 `PS ...>` 才是命令行。第 8 步要跑 `--entree`，必须先 `Ctrl+C` 退出游戏（或另开一个窗口），
+> 否则游戏会把它当成手牌编号并回一句 `[refuse] ce n'est pas un nombre : ...`。
+
 ## 时间轴
 
 | 段落 | 时间 | 内容 |
@@ -386,6 +390,23 @@ Tour 2 - Bob (ordinateur)   etat : il faut poser une carte
 > 这就是为什么两副牌堆抽空就会终局——`Pioche` 那两个数字是全局倒计时。
 
 ## 8 · 6:20–7:10 回放到终局
+
+### 8.1 先退出交互模式（6:20–6:35）
+
+**【键入】** `Ctrl+C`
+
+**【屏幕】**
+```text
+Carte a poser (1 a 3) :
+> ^C
+PS D:\OneDrive\桌面\Cpp-project>
+```
+
+**【口播】**
+> 交互模式里 `--entree` 是启动参数，不能中途敲进去——参数只在程序启动时读一次。
+> 所以我先退出，退出之后提示符变回 `PS D:\OneDrive\桌面\Cpp-project>`，这时敲的才是命令。
+
+### 8.2 回放整局（6:35–7:10）
 
 **【键入】**
 ```powershell
