@@ -23,7 +23,7 @@ ResultatJoueur::ResultatJoueur()
 Partie::Partie()
     : etatPartie(EtatPartie::NON_DEMARREE), configuration(), joueurs(), piocheCartes(),
       objectifsCommuns(), initialesDisponibles(), objectifsDisponibles(),
-      indexCourant(0), attenteDePioche(false), toursRestants(0), passesConsecutifs(0), classement()
+      indexCourant(0), compteurTours(1), attenteDePioche(false), toursRestants(0), passesConsecutifs(0), classement()
 {
     objectifsCommuns[0] = std::shared_ptr<const Objectif>();
     objectifsCommuns[1] = std::shared_ptr<const Objectif>();
@@ -71,6 +71,7 @@ void Partie::preparer(const ConfigurationPartie& configurationDemandee, Generate
     }
 
     indexCourant = 0;
+    compteurTours = 1;
     attenteDePioche = false;
     toursRestants = 0;
     classement.clear();
@@ -121,6 +122,7 @@ void Partie::commencer()
         joueurs[i].zone().poserCarteInitiale(joueurs[i].carteInitiale(), joueurs[i].faceInitialeRecto());
     }
     indexCourant = 0;
+    compteurTours = 1;
     attenteDePioche = false;
     passesConsecutifs = 0;
     etatPartie = EtatPartie::EN_COURS;
@@ -149,6 +151,11 @@ int Partie::nombreJoueurs() const
 int Partie::joueurCourant() const
 {
     return indexCourant;
+}
+
+int Partie::numeroTour() const
+{
+    return compteurTours;
 }
 
 const Joueur& Partie::joueur(int indice) const
@@ -329,7 +336,11 @@ void Partie::terminerTour()
             return;
         }
     }
-    indexCourant = (indexCourant + 1) % nombreJoueurs();
+    int suivant = (indexCourant + 1) % nombreJoueurs();
+    if (suivant == 0) {
+        ++compteurTours;
+    }
+    indexCourant = suivant;
 }
 
 int Partie::pointsObjectifs(int indiceJoueur) const

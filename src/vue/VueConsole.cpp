@@ -118,7 +118,7 @@ void VueConsole::afficherTable(const Partie& partie)
          << ", dorees " << partie.pioche().tailleTas(true) << std::endl;
 
     const Joueur& actuel = partie.joueur(partie.joueurCourant());
-    flux << "Tour de : " << actuel.nom();
+    flux << "Tour " << partie.numeroTour() << " - " << actuel.nom();
     if (actuel.estOrdinateur()) {
         flux << " (ordinateur)";
     }

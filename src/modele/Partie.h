@@ -54,6 +54,8 @@ public:
     bool attentePioche() const;
     int nombreJoueurs() const;
     int joueurCourant() const;
+    // Numero du tour en cours (1 au premier tour, +1 quand on revient au premier joueur).
+    int numeroTour() const;
     const Joueur& joueur(int indice) const;
     Joueur& joueur(int indice);
     const Pioche& pioche() const;
@@ -85,6 +87,7 @@ private:
     std::vector<std::shared_ptr<const Carte> > initialesDisponibles;
     std::vector<int> objectifsDisponibles;
     int indexCourant;
+    int compteurTours;
     bool attenteDePioche;
     int toursRestants;
     int passesConsecutifs;
