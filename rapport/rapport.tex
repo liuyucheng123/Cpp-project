@@ -7,8 +7,7 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds,calc}
-\usepackage{pgf-umlcd}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,shapes.multipart,fit,backgrounds,calc}
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{adjustbox}
@@ -33,6 +32,27 @@
 }
 
 \newcommand{\cl}[1]{\texttt{#1}}
+
+% ---- boites de classe UML : trois compartiments, largeur et alignement maitrises ----
+\definecolor{umlBord}{RGB}{139,32,74}
+\definecolor{umlFill}{RGB}{252,246,214}
+\tikzset{
+  umlclass/.style={%
+    draw=umlBord, fill=umlFill, text=black, line width=0.6pt,
+    rectangle split, rectangle split parts=3,
+    rectangle split part align={center,left,left},
+    align=left, font=\scriptsize, inner xsep=3.5pt, inner ysep=2.8pt},
+  umlline/.style={draw=umlBord, line width=0.6pt},
+  umlgen/.style={umlline, -{Triangle[open, length=7pt, width=6pt]}},
+  umlagg/.style={umlline, {Diamond[open, length=8pt, width=6pt]}-},
+  umlcomp/.style={umlline, {Diamond[length=8pt, width=6pt]}-},
+  umlmult/.style={font=\scriptsize, fill=white, inner sep=1pt, text=black}
+}
+% \umlbox{identifiant}{titre}{position}{largeur}{attributs}{operations}
+\newcommand{\umlbox}[6]{%
+  \node[umlclass, text width=#4] (#1) at (#3)
+    {\textbf{#2}\nodepart{second}#5\nodepart{third}#6};%
+}
 
 \title{\textbf{LO02 --- Projet Codex Naturalis}\\[4pt]
 \large 基于课程所授 C++ 与设计模式的控制台实现\\[2pt]
@@ -66,8 +86,7 @@ Université de Technologie Sino-Européenne de l'Université de Shanghai}
 \emph{Codex Naturalis} 的控制台版本。程序支持 1--4 名玩家（真人与电脑混合）、
 严格的放置与资源校验、三类镀金牌的即时计分、四类目标卡的终局计分，以及完整的终局判定。
 架构上刻意只使用课件出现过的语言特性与七个设计模式（Template Method、Strategy、
-Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动化脚本证明
-「零超纲」：全部源码在 \cl{-Wall -Wextra -pedantic} 下零警告，
+Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动化脚本证明：全部源码在 \cl{-Wall -Wextra -pedantic} 下零警告，
 \cl{c++14}/\cl{c++17} 均可编译，207 次断言全部通过，200 局自动对局无异常。
 \end{quote}
 
@@ -96,24 +115,10 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
       控制台画面足以理解局面。
 \item \textbf{架构可扩展}：新增 AI、新增目标类型、新增牌类或新增显示方式时，
       不修改既有的规则代码。
-\item \textbf{严守课程范围}：只使用课件出现过的语言特性与设计模式，不用 lambda、
-      不用 \cl{std::function}、不用任何第三方库。
+\item \textbf{严守课程范围}：只使用课程出现过的语言特性与设计模式，不用任何第三方库。
 \item \textbf{可验证}：单元测试、批量自动对局、静态检查三条线全部可复现。
 \end{enumerate}
 
-\subsection{「不超纲」的界定}
-课件共 133 页，覆盖语言基础、类与 UML、封装与构造析构、静态成员、运算符重载、
-自定义异常、对象关联、拷贝赋值、智能指针、继承与多态、抽象类、类型转换与 RTTI、
-函数模板与类模板、标准库（string、iostream、STL 容器/迭代器/算法）以及七个设计模式。
-课件\textbf{没有}讲授 lambda、\cl{std::function}、\cl{optional/variant/filesystem}、
-ranges/concepts/modules、线程、正则、\cl{chrono}、\cl{format} 等，因此本项目一律不用。
-具体到实现层面的三条自定规则是：
-\begin{itemize}
-\item 任何「算法参数」都用\textbf{对象}表达（\cl{StrategieIA}），而不是函数对象或 lambda；
-\item 所有动态分配都通过 \cl{std::shared\_ptr} / \cl{std::make\_shared} / \cl{std::make\_unique}
-      （唯一例外是 \cl{CatalogueCartes} 单例内部的静态裸指针，与课件第 104 页写法一致）；
-\item 测试不引入 Catch2/gtest，而是 40 行的自制断言宏。
-\end{itemize}
 
 \section{功能实现情况}
 
@@ -308,32 +313,39 @@ protected:
 \centering
 \begin{adjustbox}{max width=\linewidth}
 \begin{tikzpicture}
-\begin{class}{Carte}{0,0}
-\attribute{\# id : int}
-\attribute{\# royaume : Ressource}
-\attribute{\# categorie : int}
-\operation{+ pointsAuPose(c) : int}
-\operation{\underline{\# pointsFixes() : int}}
-\operation{\# pointsVariables(c) : int}
-\end{class}
-\begin{class}{CarteRessource}{-6.8,-5.4}
-\attribute{- recto, verso : FaceCarte}
-\attribute{- pointsBanniere : int}
-\end{class}
-\begin{class}{CarteDoree}{0,-6.0}
-\attribute{- typeScore : TypeScoreDore}
-\attribute{- exigences : map}
-\operation{+ exigencesSatisfaites(r) : bool}
-\end{class}
-\begin{class}{CarteInitiale}{6.8,-5.4}
-\attribute{- faceRecto, faceVerso : FaceCarte}
-\end{class}
-\draw[-{Triangle[open]}] (CarteRessource.north) -- (Carte.south -| CarteRessource.north);
-\draw[-{Triangle[open]}] (CarteDoree.north) -- (Carte.south);
-\draw[-{Triangle[open]}] (CarteInitiale.north) -- (Carte.south -| CarteInitiale.north);
+\umlbox{Carte}{\textit{Carte}}{0,0}{4.6cm}{%
+  \# id : int\\
+  \# royaume : Ressource\\
+  \# categorie : int}{%
+  + pointsAuPose(c) : int\\
+  \textit{\# pointsFixes()} : int\\
+  \# pointsVariables(c) : int}
+\umlbox{CarteRessource}{CarteRessource}{-6.3,-4.9}{4.4cm}{%
+  - faceRecto : FaceCarte\\
+  - faceVerso : FaceCarte\\
+  - pointsBanniere : int}{%
+  \# pointsFixes() : int}
+\umlbox{CarteDoree}{CarteDoree}{0,-4.9}{4.4cm}{%
+  - typeScore : TypeScoreDore\\
+  - objetScore : Ressource\\
+  - exigences : map}{%
+  + exigencesSatisfaites(r) : bool\\
+  \# pointsFixes() : int\\
+  \# pointsVariables(c) : int}
+\umlbox{CarteInitiale}{CarteInitiale}{6.3,-4.9}{4.4cm}{%
+  - faceRecto : FaceCarte\\
+  - faceVerso : FaceCarte}{%
+  \# pointsFixes() : int}
+% generalisation : les trois sous-classes partagent une pointe unique
+\coordinate (busC) at (0,-3.15);
+\foreach \c in {CarteRessource, CarteDoree, CarteInitiale} {
+  \draw[umlline] (\c.north) -- (\c.north |- busC);
+}
+\draw[umlline] (CarteRessource.north |- busC) -- (CarteInitiale.north |- busC);
+\draw[umlgen] (busC) -- (Carte.south);
 \end{tikzpicture}
 \end{adjustbox}
-\caption{\cl{Carte} 层次}
+\caption{\cl{Carte} 层次（斜体为纯虚函数）}
 \label{fig:carte}
 \end{figure}
 
@@ -347,41 +359,45 @@ protected:
 \centering
 \begin{adjustbox}{max width=\linewidth}
 \begin{tikzpicture}
-\begin{class}{Objectif}{0,0}
-\attribute{- id : int}
-\operation{\underline{+ evaluer(zone) : int}}
-\operation{\underline{+ description() : string}}
-\end{class}
-\begin{class}{ObjectifCompose}{-8.6,-5.2}
-\attribute{- enfants : vector}
-\operation{+ ajouter(o)}
-\end{class}
-\begin{class}{ObjectifMotif}{-3.0,-5.2}
-\attribute{- royaume : Ressource}
-\attribute{- diagonale : bool}
-\end{class}
-\begin{class}{ObjectifSerie}{3.2,-5.2}
-\attribute{- royaume : Ressource}
-\end{class}
-\begin{class}{ObjectifObjets}{8.6,-5.2}
-\attribute{- objet : Ressource}
-\end{class}
-% generalisation en style arbre : les quatre sous-classes partagent une seule pointe
-\coordinate (bus) at (0,-2.45);
-\foreach \c in {ObjectifCompose, ObjectifMotif, ObjectifSerie, ObjectifObjets} {
-  \draw (\c.north) -- (\c.north |- bus);
+\umlbox{Objectif}{\textit{Objectif}}{0,0}{5.0cm}{%
+  - id : int}{%
+  \textit{+ evaluer(zone) : int}\\
+  \textit{+ description() : string}}
+\umlbox{ObjectifCompose}{ObjectifCompose}{-6.3,-4.6}{4.4cm}{%
+  - enfants : vector}{%
+  + ajouter(o)\\
+  + evaluer(zone) : int}
+\umlbox{ObjectifMotif}{ObjectifMotif}{0,-4.6}{4.4cm}{%
+  - royaume : Ressource\\
+  - diagonale : bool}{%
+  + evaluer(zone) : int}
+\umlbox{ObjectifSerieRessource}{ObjectifSerieRessource}{6.3,-4.6}{4.4cm}{%
+  - royaume : Ressource\\
+  - points : int}{%
+  + evaluer(zone) : int}
+\umlbox{ObjectifPairesObjet}{ObjectifPairesObjet}{-3.15,-8.2}{4.4cm}{%
+  - objet : Ressource\\
+  - points : int}{%
+  + evaluer(zone) : int}
+\umlbox{ObjectifTripletObjets}{ObjectifTripletObjets}{3.15,-8.2}{4.4cm}{%
+  - points : int}{%
+  + evaluer(zone) : int}
+% generalisation : les cinq sous-classes partagent une pointe unique
+\coordinate (busO) at (0,-3.15);
+\foreach \c in {ObjectifCompose, ObjectifMotif, ObjectifSerieRessource,
+                ObjectifPairesObjet, ObjectifTripletObjets} {
+  \draw[umlline] (\c.north) -- (\c.north |- busO);
 }
-\draw (ObjectifCompose.north |- bus) -- (ObjectifObjets.north |- bus);
-\draw[-{Triangle[open]}] (bus) -- (Objectif.south);
-% composition : ObjectifCompose contient 1..* Objectif (losange du cote du tout)
-\coordinate (agg) at ([xshift=-1.3cm]ObjectifCompose.north);
-\draw (agg) -- (agg |- Objectif.west) -- (Objectif.west);
-\node[left, font=\scriptsize, fill=white, inner sep=1pt] at ([yshift=0.95cm]agg) {1..*};
-\node[diamond, draw, fill=white, minimum width=8pt, minimum height=5pt, inner sep=0pt]
-      at ([yshift=2.8pt]agg) {};
+\draw[umlline] (ObjectifCompose.north |- busO) -- (ObjectifSerieRessource.north |- busO);
+\draw[umlgen] (busO) -- (Objectif.south);
+% composition : le tout (ObjectifCompose) porte 1..* parties (Objectif)
+\coordinate (ow) at ([yshift=-0.5cm]Objectif.west);
+\draw[umlagg] (ObjectifCompose.west)
+  -- (-9.2,0 |- ObjectifCompose.west) -- (-9.2,0 |- ow) -- (ow);
+\node[umlmult, above left] at ([xshift=-0.4cm,yshift=1.5pt]ow) {1..*};
 \end{tikzpicture}
 \end{adjustbox}
-\caption{目标层次：\cl{ObjectifCompose}（内部聚合 1..* 个 \cl{Objectif}）与四个叶子类}
+\caption{目标层次：\cl{ObjectifCompose} 聚合（空心菱形）1..* 个 \cl{Objectif}，另有四个叶子子类}
 \label{fig:objectif}
 \end{figure}
 
@@ -397,45 +413,50 @@ protected:
 \end{itemize}
 \cl{Pioche} 管理两个牌堆与 4 张明牌（2 资源 + 2 镀金），并提供
 \cl{prendreEtalee} / \cl{piocherSurLeTas} / \cl{completerEtalees}。
-\cl{Joueur} 聚合区域、手牌、秘密目标与分数；
-\cl{Partie} 聚合玩家数组、牌堆、2 张公共目标与回合状态。
+\cl{Joueur} 持有自己的区域、手牌、秘密目标与分数；\cl{Partie} 持有玩家数组、牌堆、
+2 张公共目标与回合状态。玩家数组与区域按值存放，故下图为\textbf{组合}（实心菱形）；
+\cl{ObjectifCompose} 的子目标由 \cl{shared\_ptr} 共享，故图~\ref{fig:objectif} 为聚合（空心菱形）。
 
 \begin{figure}[h]
 \centering
 \begin{adjustbox}{max width=\linewidth}
 \begin{tikzpicture}
-\begin{class}{Partie}{0,0}
-\attribute{- joueurs : vector<Joueur>}
-\attribute{- piocheCartes : Pioche}
-\attribute{- objectifsCommuns[2]}
-\attribute{- indexCourant, toursRestants : int}
-\operation{+ jouerCarte(i,pos,recto)}
-\operation{+ piocher(source,indice)}
-\operation{+ gagnant() : int}
-\end{class}
-\begin{class}{Joueur}{-6.6,-6.6}
-\attribute{- zoneJeu : ZoneDeJeu}
-\attribute{- cartesMain : vector}
-\attribute{- objectifRetenu}
-\attribute{- points : int}
-\end{class}
-\begin{class}{Pioche}{6.2,-6.6}
-\attribute{- tasRessource, tasDoree}
-\attribute{- etalees[4]}
-\operation{+ completerEtalees()}
-\end{class}
-\begin{class}{ZoneDeJeu}{-6.6,-11.4}
-\attribute{- grille : map}
-\attribute{- liste : vector}
-\operation{+ placementValide(...) : bool}
-\operation{+ ressourcesVisibles() : map}
-\end{class}
-\draw[-{Latex}] (Partie.south -| Joueur.north) -- node[font=\scriptsize, left, pos=0.6] {1..4} (Joueur.north);
-\draw[-{Latex}] (Partie.south -| Pioche.north) -- node[font=\scriptsize, right, pos=0.6] {1} (Pioche.north);
-\draw[-{Latex}] (Joueur.south) -- node[font=\scriptsize, right] {1} (ZoneDeJeu.north);
+\umlbox{Partie}{Partie}{0,0}{5.6cm}{%
+  - joueurs : vector<Joueur>\\
+  - piocheCartes : Pioche\\
+  - objectifsCommuns[2]\\
+  - indexCourant, toursRestants : int}{%
+  + jouerCarte(i, pos, recto)\\
+  + piocher(source, indice)\\
+  + gagnant() : int}
+\umlbox{Joueur}{Joueur}{-6.2,-7.6}{5.0cm}{%
+  - zoneJeu : ZoneDeJeu\\
+  - cartesMain : vector\\
+  - objectifRetenu : Objectif\\
+  - points : int}{%
+  + zone() : ZoneDeJeu}
+\umlbox{Pioche}{Pioche}{6.0,-7.6}{5.0cm}{%
+  - tasRessource, tasDoree\\
+  - etalees[4]}{%
+  + completerEtalees()\\
+  + prendreEtalee(i)}
+\umlbox{ZoneDeJeu}{ZoneDeJeu}{-6.2,-13.2}{5.0cm}{%
+  - grille : map\\
+  - liste : vector}{%
+  + placementValide(...) : bool\\
+  + ressourcesVisibles() : map}
+% composition : les parties sont detruites avec le tout
+\coordinate (pJ) at ([xshift=-1.3cm]Partie.south);
+\coordinate (pP) at ([xshift=1.3cm]Partie.south);
+\draw[umlcomp] (pJ) -- (pJ |- 0,-5.6) -- (-6.2,-5.6) -- (Joueur.north);
+\draw[umlcomp] (pP) -- (pP |- 0,-5.6) -- (6.0,-5.6) -- (Pioche.north);
+\draw[umlcomp] (Joueur.south) -- (ZoneDeJeu.north);
+\node[umlmult] at (-4.2,-5.35) {1..4};
+\node[umlmult] at (4.2,-5.35) {1};
+\node[umlmult] at (-5.5,-10.4) {1};
 \end{tikzpicture}
 \end{adjustbox}
-\caption{引擎核心：\cl{Partie} 聚合 1..4 个 \cl{Joueur} 与 1 副 \cl{Pioche}，\cl{Joueur} 聚合 1 个 \cl{ZoneDeJeu}}
+\caption{引擎核心：\cl{Partie} 组合 1..4 个 \cl{Joueur} 与 1 副 \cl{Pioche}，\cl{Joueur} 组合 1 个 \cl{ZoneDeJeu}}
 \label{fig:engine}
 \end{figure}
 
