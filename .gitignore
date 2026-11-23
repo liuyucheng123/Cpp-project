@@ -20,3 +20,6 @@ Projet.zip
 .vscode/
 .idea/
 cmake-build-*/
+
+# --- notes de travail locales ---
+.workbuddy/
