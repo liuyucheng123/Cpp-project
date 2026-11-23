@@ -5,6 +5,18 @@
 > 录制工具：OBS（1080p / 30 fps，窗口捕获）；成品 ≤99 MB。
 > 上传后把 bilibili 链接填进报告封面与 `Projet/rapport.pdf` 的「视频链接」一行。
 
+录制前先在 PowerShell 里调整窗口（版面按 72 列排版，窗口太窄会折断表格）：
+
+```powershell
+cd "D:\OneDrive\桌面\Cpp-project"
+$Host.UI.RawUI.WindowSize  = New-Object System.Management.Automation.Host.Size(110,38)
+$Host.UI.RawUI.BufferSize  = New-Object System.Management.Automation.Host.Size(110,3000)
+$Host.UI.RawUI.ForegroundColor = "Gray"
+Clear-Host
+```
+
+若报「窗口尺寸超出缓冲区」，先把缓冲区调大、再把字号调到 18–20 pt，最后手动拖窗口。
+
 ## 0:00–0:30 开场
 - 画面：报告封面 / 项目标题。
 - 口播：“我们是 LO02 A26 第 X 组，项目是 Codex Naturalis 的控制台版本，
@@ -77,3 +89,59 @@ powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
 - [ ] 覆盖：开局参数化 / 放牌 / 抽牌 / 三类非法被拒 / 三种镀金计分 / 终局结算 / AI / 扩展性
 - [ ] 上传 bilibili，链接填入报告封面
 - [ ] 最终目录：`Projet/`（含 `rapport.pdf`、`code/`、`video/script.md`），压缩为 `Projet.zip`
+
+---
+
+## 附 A：命令清单（逐条实测可运行，当前共 20 个提交、207 断言全过）
+
+```powershell
+cd "D:\OneDrive\桌面\Cpp-project"                    # 项目根目录（后面所有命令都在这里跑）
+
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1   # 编译游戏+测试并跑断言
+.\build\codex_naturalis.exe --aide                   # 列出全部命令行选项
+.\build\codex_naturalis.exe                          # 交互对局（键盘玩）
+.\build\codex_naturalis.exe --entree scripts\demo_entree.txt  # 回放一整局直到 FIN DE PARTIE
+.\build\codex_naturalis.exe --auto 3 --joueurs 4 --niveau 3 --graine 2026  # 4 个 AI 连打 3 局
+.\build\codex_tests.exe                              # 只跑测试（207 verifications）
+powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1  # 课程范围检查
+```
+
+预期输出：
+- `build.ps1` 末尾 → `207 verifications, 0 echec(s). TOUS LES TESTS PASSENT`
+- `--auto` 每局一行 → `Partie 1 : scores 25 15 | cartes 25 13 | objectifs 0 2 | vainqueur 0`
+  （`vainqueur 0` 是**0 基下标**，即 1 号玩家；解说时要说明，否则评阅人会以为出错）
+- `check_scope.ps1` → `Aucune fonctionnalite hors cours detectee`
+
+## 附 B：交互模式的实测按键序列
+
+2 名玩家，Alice 真人、Bob 电脑（难度 3），种子 2026。**按提示逐行键入**：
+
+| # | 屏幕提示 | 键入 | 说明 |
+|---|---|---|---|
+| 1 | `Nombre de joueurs (1 a 4)` | `2` | |
+| 2 | `Nom du joueur 1` | `Alice` | |
+| 3 | `Joueur Alice : 1 = humain, 2 = ordinateur` | `1` | 真人 |
+| 4 | `Nom du joueur 2` | `Bob` | |
+| 5 | `Joueur Bob : 1 = humain, 2 = ordinateur` | `2` | 电脑 |
+| 6 | `Niveau de l'ordinateur` | `3` | 目标导向 |
+| 7 | `Graine du hasard` | `2026` | 固定种子＝可复现 |
+| 8 | 初始牌 `1 = recto, 2 = verso` | `1` | 开局选面 |
+| 9 | `Objectif secret (1 ou 2)` | `1` | 二选一 |
+| 10 | `Carte a poser (1 a 3)` | `1` | 手牌编号 |
+| 11 | `Face : 1 = recto, 2 = verso` | `1` | |
+| 12 | `Choix du placement` | `1` | 列表第 1 个合法落点 |
+| 13 | `Ou piocher ? 1-4 = carte visible, 5 = tas ressource, 6 = tas doree` | `2` | 抽第 2 张明牌 |
+
+一个真人回合就是第 10–13 步；之后轮到电脑，屏幕会自己走完 Bob 的一回合，再回到 Alice。
+
+三类非法输入（在任意 `Votre choix :` 处演示，输完程序会提示并重新询问）：
+
+| 演示内容 | 键入 | 预期提示 |
+|---|---|---|
+| 数字越界 | 在 `Carte a poser (1 a 3)` 输 `9` | `valeur hors limites : il faut entre 1 et 3` |
+| 非数字 | 输 `abc` | `ce n'est pas un nombre : abc` |
+| 镀金牌需求不满足 | 选带 `exige 3 plante 1 animal` 的牌并选面 | `aucun placement possible avec cette carte et cette face` |
+
+> 录制提示：交互模式每回合会重印整块棋盘（约 40 行），走 3–4 个回合就够，
+> 不必玩到 20 分；终局效果用 `--entree scripts\demo_entree.txt` 回放更省时间，
+> 回放结束时屏幕会停在 `FIN DE PARTIE` 的四列结算表上，正好对着它讲计分。
