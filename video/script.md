@@ -48,6 +48,10 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1
   2. 选一张需求不满足的镀金牌的正面 → 提示「exige 3 plante 1 animal」；
   3. 在「可选落点」为空时换牌 → 提示「aucun placement possible」。
 - 口播：“所有校验都在修改状态之前完成，被拒绝的动作不会留下半完成状态。”
+- AI 回合：Bob 是电脑，轮到他时屏幕没有输入提示，只有一行摘要
+  `Bob joue D45 en (-1,-1) verso (+2 pts)`，然后立刻回到 Alice。
+  口播点明：“电脑的每一步都会留一行记录（牌号、坐标、正反面、得分），
+  否则观众只看得到分数在跳，会以为 AI 没在走棋。”
 
 ## 5:00–6:00 镀金牌的三种计分
 - 画面：抽到/打出三种镀金牌各一次，指出分数变化与原因：
