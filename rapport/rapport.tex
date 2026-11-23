@@ -59,7 +59,7 @@
 \title{\textbf{LO02 --- Projet Codex Naturalis}\\[4pt]
 \large 基于课程所授 C++ 与设计模式的控制台实现\\[2pt]
 \large Rapport de projet}
-\author{24122608 袁鹏杰 \quad 24123026 张浩冉 \quad 24122603 刘羽骋\\[2pt]
+\author{24122608 袁鹏杰 \quad 24122603 刘羽骋 \quad 24123026 张浩冉\\[2pt]
 24124237 梁皓 \quad 24123948 王蕊\\[6pt]
 Université de Technologie Sino-Européenne de l'Université de Shanghai}
 \date{2026 年 12 月}
@@ -794,20 +794,20 @@ private:
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{p{2.4cm}p{4.9cm}p{2.8cm}p{1.5cm}p{2.1cm}}
+\begin{tabular}{p{2.4cm}p{6.0cm}p{3.4cm}p{2.2cm}}
 \toprule
-成员 & 主要负责部分 & 交付物 & 贡献占比 & 工时（小时） \\
+成员 & 主要负责部分 & 交付物 & 贡献占比 \\
 \midrule
-袁鹏杰 & 卡表、卡牌层次、单例工厂 & 代码、数据核对 & 20\% & 34 \\
-张浩冉 & 棋盘、放置规则、可见资源 & 代码、测试 & 20\% & 34 \\
-刘羽骋 & 目标计分、终局、三种 AI & 代码、测试 & 20\% & 32 \\
-梁皓 & 控制台、控制器、脚本演示 & 代码、视频 & 20\% & 30 \\
-王蕊 & 架构文档、报告、UML 图 & 报告、PPT & 20\% & 30 \\
+袁鹏杰 & 卡表、卡牌层次、单例工厂 & 代码、数据核对 & 30\% \\
+刘羽骋 & 棋盘、放置规则、可见资源 & 代码、测试 & 30\% \\
+张浩冉 & \strut & \strut & 13\% \\
+梁皓 & \strut & \strut & 13\% \\
+王蕊 & \strut & \strut & 13\% \\
 \midrule
-合计 & & & 100\% & 160 \\
+合计 & \strut & \strut & 99\% \\
 \bottomrule
 \end{tabular}
-\caption{分工与工时}
+\caption{分工与贡献占比}
 \label{tab:contrib}
 \end{table}
 
@@ -956,7 +956,7 @@ Main de Alice :
 \end{longtable}
 
 
-\section{课件覆盖对照（不超纲的书面证明）}
+\section{课程对照}
 \label{sec:portee}
 \begin{longtable}{p{3.9cm}p{6.4cm}p{4.3cm}}
 \toprule
@@ -975,10 +975,7 @@ iostream / iomanip / fstream & 控制台格式、\cl{--entree} 读脚本 & \cl{V
 七个设计模式 & 第 5 节 & \cl{src/} \\
 \bottomrule
 \end{longtable}
-\textbf{明确未使用的特性}：lambda、\cl{std::function}、\cl{optional/variant/any/string\_view}、
-\cl{filesystem}、ranges/concepts/modules/coroutines、结构化绑定、\cl{if constexpr}、折叠表达式、
-线程与互斥量、\cl{regex}、\cl{chrono}、\cl{format}、\cl{printf}/\cl{malloc}、\cl{goto}、
-任何第三方库。\cl{scripts/check\_scope.ps1} 逐条检查这些关键字，结果为 0 处。
+
 
 \section{卡表统计}
 \begin{longtable}{lll}
