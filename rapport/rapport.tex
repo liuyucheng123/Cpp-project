@@ -802,10 +802,11 @@ private:
 袁鹏杰 & 86 张卡的静态数据表与一致性校验；\cl{Carte} 四层继承层次与模板方法计分；
          卡牌工厂与单例卡表 & 代码、数据核对、视频 & 30\% \\
 刘羽骋 & 稀疏网格棋盘模型（\cl{map}，支持负坐标与按需增长）；放置合法性四类判定
-         （可见角、隐藏角、重叠、镀金资源需求）；四角覆盖计数与可见资源统计 & 代码、单元测试 & 30\% \\
+         （可见角、隐藏角、重叠、镀金资源需求）；四角覆盖与可见资源统计 & 代码、单元测试 & 30\% \\
 张浩冉 & 五类目标计分；终局补轮与最终一回合结算；三种 AI 难度策略 & 代码、测试 & 13\% \\
 梁皓 & 控制台视图与输入解析；回合控制流、自动对局与演示输入脚本 & 代码、演示脚本 & 13\% \\
-王蕊 & 架构与规则文档；报告排版与 UML 图 & 报告 & 13\% \\
+王蕊 & 异常体系与提示文案（\cl{ExceptionJeu} 及六个子类）、\cl{IterateurCartes} 迭代器；
+         架构与规则文档；报告排版与 UML 图 & 代码、报告 & 13\% \\
 \midrule
 合计 & \strut & \strut & 99\% \\
 \bottomrule
@@ -938,6 +939,11 @@ Main de Alice :
       recto HG=C HD=. BG=# BD=. [-]   |   verso HG=. HD=. BG=. BD=. [champignon]
   [3] D55 (plante) +2 pts par coin recouvert | exige 3 plante 1 animal
       recto HG=. HD=. BG=. BD=# [-]   |   verso HG=. HD=. BG=. BD=. [plante]
+\end{lstlisting}
+电脑玩家由 \cl{jouerTourAutomatique()} 驱动，走棋后控制器会补一行摘要，
+否则屏幕上只看得到分数的变化：
+\begin{lstlisting}
+Bob joue D45 en (-1,-1) verso (+2 pts)
 \end{lstlisting}
 
 \section{游戏规则速查（实现所依据的规则）}
