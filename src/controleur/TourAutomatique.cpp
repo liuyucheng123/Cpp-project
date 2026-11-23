@@ -1,14 +1,34 @@
 #include "controleur/TourAutomatique.h"
 
 #include "modele/Carte.h"
+#include "modele/Joueur.h"
 #include "modele/Partie.h"
 #include "modele/StrategieIA.h"
+#include "modele/ZoneDeJeu.h"
 #include "noyau/ExceptionJeu.h"
 
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace codex {
 namespace {
+
+// Construit la ligne affichee apres le coup de l'ordinateur, pour que son
+// action soit visible a l'ecran (sinon seul le score change).
+void decrirePose(const Joueur& joueur, int scoreAvant, std::string* resume)
+{
+    if (resume == nullptr || joueur.zone().cartesPlacees().empty()) {
+        return;
+    }
+    const CartePlacee& derniere = joueur.zone().cartesPlacees().back();
+    const int gagnes = joueur.score() - scoreAvant;
+    std::ostringstream flux;
+    flux << joueur.nom() << " joue " << derniere.carte->nom() << " en "
+         << derniere.origine << ' ' << (derniere.recto ? "recto" : "verso")
+         << " (+" << gagnes << (gagnes > 1 ? " pts)" : " pt)");
+    *resume = flux.str();
+}
 
 bool placerAvecRepli(Partie& partie, int indiceJoueur, const ActionTour& action)
 {
@@ -80,7 +100,8 @@ void piocherAvecRepli(Partie& partie, const ActionTour& action)
 
 } // namespace
 
-bool jouerTourAutomatique(Partie& partie, int indiceJoueur, StrategieIA& strategie)
+bool jouerTourAutomatique(Partie& partie, int indiceJoueur, StrategieIA& strategie,
+                          std::string* resume)
 {
     Joueur& joueur = partie.joueur(indiceJoueur);
     if (joueur.nombreCartesEnMain() == 0 || !partie.placementPossible(indiceJoueur)) {
@@ -89,10 +110,12 @@ bool jouerTourAutomatique(Partie& partie, int indiceJoueur, StrategieIA& strateg
     }
 
     ActionTour action = strategie.choisirAction(partie, indiceJoueur);
+    const int scoreAvant = joueur.score();
     if (!placerAvecRepli(partie, indiceJoueur, action)) {
         partie.passerTour();
         return false;
     }
+    decrirePose(joueur, scoreAvant, resume);
     piocherAvecRepli(partie, action);
     return true;
 }

@@ -219,9 +219,12 @@ void ControleurPartie::tourOrdinateur()
     }
 
     std::shared_ptr<StrategieIA> strategie = strategies[indice];
-    bool pose = jouerTourAutomatique(partie, indice, *strategie);
+    std::string resume;
+    bool pose = jouerTourAutomatique(partie, indice, *strategie, &resume);
     if (!pose) {
         vue.afficherMessage(joueur.nom() + " passe son tour.");
+    } else if (!resume.empty()) {
+        vue.afficherMessage(resume);
     }
 }
 
