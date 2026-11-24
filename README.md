@@ -9,8 +9,8 @@ exceptions, pointeurs intelligents, templates, STL et les patrons de conception 
 ```powershell
 # Windows, MinGW (GCC) deja installe (fourni avec CLion)
 powershell -ExecutionPolicy Bypass -File scripts\build.ps1
-.build\codex_naturalis.exe            # partie interactive
-.build\codex_naturalis.exe --aide     # options
+.\build\codex_naturalis.exe            # partie interactive
+.\build\codex_naturalis.exe --aide     # options
 ```
 
 En cas d'ouverture dans CLion : ouvrir le dossier `code`, la configuration CMake est fournie.
@@ -29,7 +29,7 @@ En cas d'ouverture dans CLion : ouvrir le dossier `code`, la configuration CMake
 Exemple de verification complete :
 
 ```powershell
-.build\codex_naturalis.exe --auto 20 --joueurs 3 --niveau 3 --graine 1
+.\build\codex_naturalis.exe --auto 20 --joueurs 3 --niveau 3 --graine 1
 ```
 
 ## Regles implementees
@@ -64,7 +64,7 @@ l'affichage sans le modifier.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\build.ps1   # compile et lance les tests
-.build\codex_tests.exe                                        # tests seuls
+.\build\codex_tests.exe                                        # tests seuls
 powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1   # verifie la portee du cours
 ```
 
