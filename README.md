@@ -15,6 +15,10 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 
 En cas d'ouverture dans CLion : ouvrir le dossier `code`, la configuration CMake est fournie.
 
+## 视频演示 / Demonstration video
+
+<https://www.bilibili.com/video/BV1diyRzGEDQ>
+
 ## Options de la ligne de commande
 
 | Option | Effet |
