@@ -125,8 +125,12 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 
 \section{功能实现情况}
 
-表 \ref{tab:fonctions} 逐条对照作业要求。所有要求的功能均已实现，并由
-\cl{codex\_tests.exe} 中的用例覆盖。
+表 \ref{tab:fonctions} 逐条对照作业要求，末两行单独列出\textbf{未实现}的项。
+除这两行之外，其余操作全部实现，并由 \cl{codex\_tests.exe} 中的用例覆盖。
+未实现的项都属于作业中的可选项或官方扩展：官方单人模式（对手为 Tybor Kwelein）
+需要专属卡组与专属计分表，本项目的 1 人模式是「单人练习局」，按多人规则跑分、
+没有 AI 对手；精灵牌（cartes esprits）在作业原文中写作 \emph{éventuellement}，
+属可选卡组。两者的接入方式都在第 \ref{sec:extensible} 节给出。
 
 \begin{table}[h]
 \centering
@@ -136,7 +140,7 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 作业要求的功能 & 状态 & 实现位置与说明 \\
 \midrule
 开局参数化（人数、姓名） & 已完成 & \cl{Menu}：1--4 人、每座位姓名、真人/电脑、AI 难度 \\
-单人/多人模式 & 已完成 & 1 人即「1 真人 + IA」；每座位可独立设为电脑 \\
+单人/多人开局 & 已完成 & 每座位可独立设为真人或电脑；1 人也可开局（单人练习局） \\
 初始牌选面 & 已完成 & \cl{Partie::choisirFaceInitiale}；界面同时显示正反两面的角与中央资源 \\
 秘密目标二选一 & 已完成 & \cl{Partie::choisirObjectifSecret}（2 张候选） \\
 放牌合法性校验 & 已完成 & \cl{ZoneDeJeu::placementValide}：可见角、隐藏角、重叠、镀金资源 \\
@@ -146,6 +150,9 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 目标计分 & 已完成 & 斜线、L、三同资源、物件对与三异 \\
 胜负与平局 & 已完成 & 总分 $\rightarrow$ 目标分 $\rightarrow$ 并列 \\
 控制台局面显示 & 已完成 & \cl{VueConsole}：角标网格 + 已放牌清单 + 资源/物件统计 + 手牌详情 \\
+\midrule
+官方单人模式（对手 Tybor） & \textbf{未实现} & 需专属卡组与专属计分表；接入方案见第 \ref{sec:extensible} 节 \\
+精灵牌（cartes esprits） & \textbf{未实现} & 作业原文标注为可选（\emph{éventuellement}）；接入方案见第 \ref{sec:extensible} 节 \\
 \bottomrule
 \end{tabular}
 \caption{功能需求与实现对照}
@@ -693,6 +700,7 @@ AI 决策 & $O(n \cdot k \cdot 2 \cdot 4n)$ & $k$ 为手牌数（3） \\
 「扣了牌却没放上去」这类半完成状态——这也是为什么测试可以直接反复尝试非法输入。
 
 \section{可扩展性论证}
+\label{sec:extensible}
 
 \subsection{新增一个 AI}
 \begin{lstlisting}
@@ -753,22 +761,32 @@ private:
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{p{2.0cm}p{7.0cm}p{2.5cm}p{2.2cm}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{1.7cm}p{6.5cm}p{1.6cm}p{1.2cm}p{1.4cm}p{1.3cm}}
 \toprule
-周次 & 任务 & 依赖 & 状态 \\
+周次 & 任务 & 依赖 & 预估 & 优先级 & 状态 \\
 \midrule
-第 1--2 周 & 读规则、试玩、整理 86 张牌的数据表与计分规则 & --- & 完成 \\
-第 3 周 & 架构设计：分层、模式选型、UML 草图、接口定稿 & 数据表 & 完成 \\
-第 4 周 & \cl{noyau} + 卡牌层次 + 单例目录 + 工厂 & 架构 & 完成 \\
-第 5 周 & 棋盘几何、放置校验、可见资源与物件 & 卡牌 & 完成 \\
-第 6 周 & 目标计分、终局判定、单元测试骨架 & 棋盘 & 完成 \\
-第 7 周 & 控制台界面、控制器、脚本演示、三种 AI & 引擎 & 完成 \\
-第 8 周 & 报告、UML 图、视频、打包与提交 & 全部 & 完成 \\
+第 1--2 周 & 读规则、试玩、整理 86 张牌的数据表与计分规则 & --- & 40 h & 必需 & 完成 \\
+第 3 周 & 架构设计：分层、模式选型、UML 草图、接口定稿 & 数据表 & 30 h & 必需 & 完成 \\
+第 4 周 & \cl{noyau} + 卡牌层次 + 单例目录 + 工厂 & 架构 & 55 h & 必需 & 完成 \\
+第 5 周 & 棋盘几何、放置校验、可见资源与物件 & 卡牌 & 60 h & 必需 & 完成 \\
+第 6 周 & 目标计分、终局判定、单元测试骨架 & 棋盘 & 46 h & 必需 & 完成 \\
+第 7 周 & 控制台视图、控制器、回合控制流 & 引擎 & 22 h & 必需 & 完成 \\
+第 7 周 & 三种 AI 与演示脚本 & 引擎 & 14 h & 重要 & 完成 \\
+第 8 周 & 报告、UML 图、视频、打包与提交 & 全部 & 30 h & 必需 & 完成 \\
+\midrule
+合计 & \strut & \strut & 297 h & \strut & \strut \\
 \bottomrule
 \end{tabular}
-\caption{计划与实际执行}
+\caption{任务分解、预估工时与优先级（工时合计与表 \ref{tab:contrib} 一致）}
 \label{tab:planning}
 \end{table}
+
+复杂度按「涉及规则条数 $\times$ 跨层数」估：卡牌层次与棋盘几何最高（跨
+\cl{modele} 与 \cl{noyau}，且要处理负坐标、隐藏角与遮挡）；目标计分与终局判定居中；
+界面、脚本与演示输入最低。五档优先级中，只有「三种 AI 与脚本」定为\emph{重要}
+（即使被裁掉，多人对战仍完整），其余均为\emph{必需}——这也是最终排期里 AI
+放在第 7 周、排在所有规则实现之后的原因。
 
 
 \subsection{风险与应对}
@@ -795,23 +813,23 @@ private:
 \centering
 \small
 \setlength{\tabcolsep}{4.5pt}
-\begin{tabular}{p{2.2cm}p{7.3cm}p{3.9cm}p{1.8cm}}
+\begin{tabular}{p{2.2cm}p{6.6cm}p{3.0cm}p{1.4cm}p{1.3cm}}
 \toprule
-成员 & 主要负责部分 & 交付物 & 贡献占比 \\
+成员 & 主要负责部分 & 交付物 & 占比 & 工时 \\
 \midrule
 袁鹏杰 & 86 张卡的静态数据表与一致性校验；\cl{Carte} 四层继承层次与模板方法计分；
-         卡牌工厂与单例卡表 & 代码、数据核对、视频 & 30\% \\
+         卡牌工厂与单例卡表 & 代码、数据核对、视频 & 30\% & 90 h \\
 刘羽骋 & 稀疏网格棋盘模型（\cl{map}，支持负坐标与按需增长）；放置合法性四类判定
-         （可见角、隐藏角、重叠、镀金资源需求）；四角覆盖与可见资源统计 & 代码、单元测试 & 30\% \\
-张浩冉 & 五类目标计分；终局补轮与最终一回合结算；三种 AI 难度策略 & 代码、测试 & 13\% \\
-梁皓 & 控制台视图与输入解析；回合控制流、自动对局与演示输入脚本 & 代码、演示脚本 & 13\% \\
+         （可见角、隐藏角、重叠、镀金资源需求）；四角覆盖与可见资源统计 & 代码、单元测试 & 30\% & 90 h \\
+张浩冉 & 五类目标计分；终局补轮与最终一回合结算；三种 AI 难度策略 & 代码、测试 & 13\% & 39 h \\
+梁皓 & 控制台视图与输入解析；回合控制流、自动对局与演示输入脚本 & 代码、演示脚本 & 13\% & 39 h \\
 王蕊 & 异常体系与提示文案（\cl{ExceptionJeu} 及六个子类）、\cl{IterateurCartes} 迭代器；
-         架构与规则文档；报告排版与 UML 图 & 代码、报告 & 13\% \\
+         架构与规则文档；报告排版与 UML 图 & 代码、报告 & 13\% & 39 h \\
 \midrule
-合计 & \strut & \strut & 99\% \\
+合计 & \strut & \strut & 99\% & 297 h \\
 \bottomrule
 \end{tabular}
-\caption{分工与贡献占比}
+\caption{分工、贡献占比与投入工时}
 \label{tab:contrib}
 \end{table}
 
