@@ -26,6 +26,6 @@ f = plume       j = encrier     s = manuscrit
 ## Origine
 
 Les valeurs (coins, exigences, points, objectifs) ont ete relevees sur les cartes du jeu
-edite par Bombyx, puis verifiees par les tests `tests/test_cartes.cpp` :
+Codex Naturalis, puis verifiees par les tests `tests/test_cartes.cpp` :
 86 cartes, 16 objectifs, 10 cartes par royaume, 12 cartes Ressource a 1 point,
 16 cartes Doree a points fixes, 12 "par coin", 12 "par objet".

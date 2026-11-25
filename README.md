@@ -1,6 +1,6 @@
 # Codex Naturalis - projet LO02 (A26)
 
-Adaptation console du jeu de cartes **Codex Naturalis** (Thomas Dupont / Bombyx), realisee
+Adaptation console du jeu de cartes **Codex Naturalis**, realisee
 avec les seules notions du cours LO02 : classes, heritage, polymorphisme, classes abstraites,
 exceptions, pointeurs intelligents, templates, STL et les patrons de conception vus en cours.
 
