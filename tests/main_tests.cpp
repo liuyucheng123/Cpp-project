@@ -7,6 +7,7 @@ void testerZone();
 void testerObjectifs();
 void testerPartie();
 void testerIA();
+void testerSolo();
 
 int main()
 {
@@ -15,6 +16,7 @@ int main()
     testerObjectifs();
     testerPartie();
     testerIA();
+    testerSolo();
 
     std::cout << harnais::compteurVerifications() << " verifications, "
               << harnais::compteurEchecs() << " echec(s)." << std::endl;

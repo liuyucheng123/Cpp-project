@@ -31,7 +31,14 @@ void testerIA()
                 configurationAuto(joueurs, niveau, static_cast<unsigned int>(100 + joueurs * 10 + niveau));
             codex::ResumeSimulation resume = codex::jouerPartieAutomatique(configuration);
             VERIFIER_VRAI(resume.terminee, "la partie automatique se termine");
-            VERIFIER_EGAL(joueurs, static_cast<int>(resume.totaux.size()), "un total par joueur");
+            // En solo, Tybor ajoute une ligne de score au joueur unique.
+            const int lignesAttendues = (joueurs == 1) ? 2 : joueurs;
+            VERIFIER_EGAL(lignesAttendues, static_cast<int>(resume.totaux.size()),
+                          "un total par joueur");
+            if (joueurs == 1) {
+                VERIFIER_EGAL(0, resume.pointsObjectifs[1],
+                              "solo : Tybor ne marque pas de point d'objectif");
+            }
             if (resume.terminee) {
                 ++partiesTerminees;
             }
