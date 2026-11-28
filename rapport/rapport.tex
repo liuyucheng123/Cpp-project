@@ -76,7 +76,7 @@ Université de Technologie Sino-Européenne de l'Université de Shanghai}
 学年 & 2026--2027 秋季学期（A26）\\
 游戏 & Codex Naturalis \\
 实现方式 & C++14，控制台界面，无第三方库 \\
-代码规模 & 约 4\,900 行 C++（\cl{src/}，含头文件）+ 约 610 行测试 \\
+代码规模 & 约 5\,400 行 C++（\cl{src/}，含头文件）+ 约 810 行测试 \\
 视频链接 & \href{https://www.bilibili.com/video/BV1diyRzGEDQ}{BV1diyRzGEDQ}（bilibili，可点击） \\
 提交日期 & 2026-12-10 \\
 \bottomrule
@@ -86,11 +86,12 @@ Université de Technologie Sino-Européenne de l'Université de Shanghai}
 \vspace{8mm}
 \begin{quote}
 \textbf{摘要。}本项目用课程所讲授的 C++ 语言与面向对象设计方法，完整实现了桌游
-\emph{Codex Naturalis} 的控制台版本。程序支持 1--4 名玩家（真人与电脑混合）、
-严格的放置与资源校验、三类镀金牌的即时计分、四类目标卡的终局计分，以及完整的终局判定。
-架构上使用课程出现过的语言特性与七个设计模式（Template Method、Strategy、
+\emph{Codex Naturalis} 的控制台版本。程序支持 1--4 名玩家：1 人即官方单人模式
+（对战缮写修士 Tybor Kwelein），2--4 人为多人，座位可真人或电脑。放置与资源校验、
+三类镀金牌的即时计分、四类目标卡的终局计分以及终局判定均按官方规则实现。架构上使用课程
+出现过的语言特性与七个设计模式（Template Method、Strategy、
 Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动化脚本证明：全部源码在 \cl{-Wall -Wextra -pedantic} 下零警告，
-\cl{c++14}/\cl{c++17} 均可编译，207 次断言全部通过，200 局自动对局无异常。
+\cl{c++14}/\cl{c++17} 均可编译，249 次断言全部通过，200 局四人自动对局与 50 局单人自动对局均无异常。
 \end{quote}
 
 \newpage
@@ -125,12 +126,10 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 
 \section{功能实现情况}
 
-表 \ref{tab:fonctions} 逐条对照作业要求，末两行单独列出\textbf{未实现}的项。
-除这两行之外，其余操作全部实现，并由 \cl{codex\_tests.exe} 中的用例覆盖。
-未实现的项都属于作业中的可选项或官方扩展：官方单人模式（对手为 Tybor Kwelein）
-需要专属卡组与专属计分表，本项目的 1 人模式是「单人练习局」，按多人规则跑分、
-没有 AI 对手；精灵牌（cartes esprits）在作业原文中写作 \emph{éventuellement}，
-属可选卡组。两者的接入方式都在第 \ref{sec:extensible} 节给出。
+表 \ref{tab:fonctions} 逐条对照作业要求。表中功能全部实现，并由 \cl{codex\_tests.exe}
+中的 249 条断言覆盖。精灵牌（cartes esprits）\textbf{不属于官方基础版}的组件（授课
+教师已确认），本项目因此不自行发明这一卡组，而把它当作一个不明确的可选扩展处理：
+第 \ref{sec:extensible} 节说明如何在不改动规则代码的前提下接入新牌类与新机制。
 
 \begin{table}[h]
 \centering
@@ -140,7 +139,7 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 作业要求的功能 & 状态 & 实现位置与说明 \\
 \midrule
 开局参数化（人数、姓名） & 已完成 & \cl{Menu}：1--4 人、每座位姓名、真人/电脑、AI 难度 \\
-单人/多人开局 & 已完成 & 每座位可独立设为真人或电脑；1 人也可开局（单人练习局） \\
+单人 / 多人开局 & 已完成 & 1 人 = 官方单人模式（对手 Tybor Kwelein，三档难度）；2--4 人座位可真人或电脑 \\
 初始牌选面 & 已完成 & \cl{Partie::choisirFaceInitiale}；界面同时显示正反两面的角与中央资源 \\
 秘密目标二选一 & 已完成 & \cl{Partie::choisirObjectifSecret}（2 张候选） \\
 放牌合法性校验 & 已完成 & \cl{ZoneDeJeu::placementValide}：可见角、隐藏角、重叠、镀金资源 \\
@@ -149,15 +148,25 @@ Factory Method、Singleton、Iterator、Adapter、Composite），并通过自动
 即时计分 & 已完成 & 资源牌横幅分、镀金牌固定分/按角/按物件 \\
 目标计分 & 已完成 & 斜线、L、三同资源、物件对与三异 \\
 胜负与平局 & 已完成 & 总分 $\rightarrow$ 目标分 $\rightarrow$ 并列 \\
+官方单人模式（Tybor） & 已完成 & \cl{Tybor}：每回合在左右两列各取一张；回合、终局、名次全部复用 \cl{Partie} \\
 控制台局面显示 & 已完成 & \cl{VueConsole}：角标网格 + 已放牌清单 + 资源/物件统计 + 手牌详情 \\
-\midrule
-官方单人模式（对手 Tybor） & \textbf{未实现} & 需专属卡组与专属计分表；接入方案见第 \ref{sec:extensible} 节 \\
-精灵牌（cartes esprits） & \textbf{未实现} & 作业原文标注为可选（\emph{éventuellement}）；接入方案见第 \ref{sec:extensible} 节 \\
+精灵牌（cartes esprits） & 不适用 & 官方基础版无此组件（教师确认）；作为可选扩展见第 \ref{sec:extensible} 节 \\
 \bottomrule
 \end{tabular}
 \caption{功能需求与实现对照}
 \label{tab:fonctions}
 \end{table}
+
+作业用三个动作名描述玩家的操作，本项目按官方机制落实，避免字面误解：
+\begin{itemize}
+\item \textbf{Placement des jetons}：在计分轨道上移动自己的计分棋子。本项目用
+      \cl{Joueur::ajouterPoints} 与 \cl{score()} 表示同一件事（控制台版以数字代替实体棋子），
+      每次放牌即时累加，终局加上目标分。
+\item \textbf{Choix d'une carte animal}：从手牌中选一张牌，\textbf{与王国无关}——
+      资源牌、镀金牌、任意王国都可选，界面上以「Carte a poser (1 a $n$)」呈现。
+\item \textbf{Placement d'un animal}：把选中的牌放进自己的手稿并校验合法性
+      （必须覆盖可见角、不能压缺失角、不能同时压两张牌的两个角、镀金牌需满足资源门槛）。
+\end{itemize}
 
 \section{总体架构}
 
@@ -309,6 +318,8 @@ public:
         return pointsFixes() + pointsVariables(contexte);   // trame fixe
     }
     virtual bool exigencesSatisfaites(const std::map<Ressource,int>&) const;
+    virtual int pointsImprimes() const;                     // nombre de la banniere (solo)
+    bool porteObjet(Ressource objet) const;                 // coins + centre du recto
 protected:
     virtual int pointsFixes() const = 0;                    // etape 1
     virtual int pointsVariables(const ContextePose&) const; // etape 2 (hook, 0 par defaut)
@@ -470,6 +481,44 @@ protected:
 \label{fig:engine}
 \end{figure}
 
+单人模式没有另造一套引擎：\cl{Joueur} 只多一个 \cl{estTybor()} 标记，
+\cl{Partie} 只多一个 \cl{Tybor} 组件和一个入口 \cl{jouerTourTybor()}。
+Tybor 没有手牌、没有初始牌、也没有目标，只有一张「王国 $\rightarrow$ 数量」的资源表；
+他的回合由 \cl{jouerTourTybor} 驱动，之后仍然走同一套 \cl{verifierFinDePartie}
+与 \cl{terminerTour}，因此轮转顺序、终局补轮、20 分判定、名次比较都不需要第二份实现
+（图 \ref{fig:solo}）。
+
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}
+\umlbox{PartieSolo}{Partie}{0,0}{5.4cm}{%
+  - joueurs : vector<Joueur>\\
+  - tybor : Tybor\\
+  - indexCourant, toursRestants : int}{%
+  + jouerTourTybor() : string\\
+  + indiceTybor() : int\\
+  + estModeSolo() : bool}
+\umlbox{Tybor}{Tybor}{7.9,0}{5.4cm}{%
+  - ressources : map<Ressource,int>\\
+  - niveauDifficulte : int}{%
+  + jouerTour(pioche, o1, o2, j) : string\\
+  + totalRessources() : int}
+\umlbox{PiocheSolo}{Pioche}{7.9,-6.6}{5.4cm}{%
+  - tasRessource, tasDoree\\
+  - etalees[4]}{%
+  + prendreEtalee(i)\\
+  + completerEtalees()}
+\draw[umlcomp] (PartieSolo.east) -- (Tybor.west);
+\draw[umlline, dashed] (Tybor.south) -- (PiocheSolo.north);
+\node[umlmult] at ([yshift=6pt]$(PartieSolo.east)!0.5!(Tybor.west)$) {1};
+\node[umlmult, right] at ([xshift=3pt]$(Tybor.south)!0.55!(PiocheSolo.north)$) {lit};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{单人模式：\cl{Partie} 组合一个 \cl{Tybor}；后者只读取中央明牌与两张公共目标，不持有自己的手稿}
+\label{fig:solo}
+\end{figure}
+
 \newpage
 \subsection{卡表与编码}
 卡表以 C++ 静态数组形式编入（\cl{src/modele/DonneesCartes.cpp}），运行时不读任何文件，
@@ -489,7 +538,7 @@ struct DonneeCarte {
 \end{lstlisting}
 
 角上的符号用字符编码：P 植物、A 动物、C 真菌、I 昆虫、f 羽毛、j 墨水瓶、s 羊皮纸、
-点号表示可见空角、井号表示缺失角。测试 \cl{tests/test\_cartes.cpp} 用 14 条断言核对整张表：
+点号表示可见空角、井号表示缺失角。测试 \cl{tests/test\_cartes.cpp} 用 58 条断言核对整张表：
 86 张牌、16 个目标、每王国 10 张资源牌、12 张 1 分资源牌、16 张固定分镀金牌、
 12 张按角、12 张按物件。
 
@@ -501,14 +550,14 @@ struct DonneeCarte {
 \toprule
 目录 & 规模 & 职责 \\
 \midrule
-\cl{src/noyau} & 11 文件 / 302 行 & 资源枚举与符号、坐标、随机数、异常层次、洗牌模板 \\
-\cl{src/modele} & 36 文件 / 2706 行 & 卡牌与目标层次、棋盘、牌堆、玩家、引擎、卡表、AI \\
-\cl{src/vue} & 4 文件 / 312 行 & \cl{Vue} 接口与控制台实现 \\
-\cl{src/controleur} & 10 文件 / 623 行 & 菜单、主循环、输入适配、自动回合、批量模拟 \\
-\cl{src/main.cpp} & 126 行 & 命令行参数与模式选择 \\
-\cl{tests} & 8 文件 / 534 行 & 断言宏、测试工具、五个测试文件 \\
+\cl{src/noyau} & 11 文件 / 388 行 & 资源枚举与符号、坐标、随机数、异常层次、洗牌模板 \\
+\cl{src/modele} & 38 文件 / 3665 行 & 卡牌与目标层次、棋盘、牌堆、玩家、引擎、卡表、AI、Tybor \\
+\cl{src/vue} & 4 文件 / 362 行 & \cl{Vue} 接口与控制台实现 \\
+\cl{src/controleur} & 10 文件 / 815 行 & 菜单、主循环、输入适配、自动回合、批量模拟 \\
+\cl{src/main.cpp} & 146 行 & 命令行参数与模式选择 \\
+\cl{tests} & 9 文件 / 812 行 & 断言宏、测试工具、六个测试文件 \\
 \midrule
-合计 & 70 文件 / 4603 行 & 源码 4069 行 + 测试 534 行 \\
+合计 & 73 文件 / 6188 行 & 源码 5376 行 + 测试 812 行 \\
 \bottomrule
 \end{tabular}
 \caption{代码规模与各目录职责}
@@ -642,6 +691,36 @@ AI & 评分函数（越大越好） \\
 \label{tab:ia}
 \end{table}
 
+\subsection{官方单人模式：Tybor 的取牌规则}
+单人模式严格按官方 \emph{Solo} 规则实现，没有另发明规则：
+\begin{enumerate}
+\item \textbf{布置}：Tybor 没有初始牌、没有秘密目标、也没有手稿区；取四种王国各一张
+      资源牌反面朝上排成一行，这就是他的资源（每样 1 个）；他的计分棋子与玩家同放 0 位。
+\item \textbf{轮次}：玩家回合照常；玩家回合结束后轮到 Tybor，他在\textbf{左右两列}
+      各取一张牌。本项目把 4 张明牌按「第 1 张资源 + 第 1 张镀金」「第 2 张资源 + 第 2 张镀金」
+      分成两列，与实体桌面的摆法一致。
+\item \textbf{每一列的三步判定}：
+      \begin{enumerate}
+      \item 他具备该镀金牌要求的资源 $\Rightarrow$ 弃掉这张牌，只拿\textbf{牌面印的分数}
+            （不套用「每个角」「每个物件」的倍率）；
+      \item 否则，若这张牌值 5 分，或它对应两张公共目标之一（同王国，或带目标指定的物件）
+            $\Rightarrow$ 翻面收进自己的资源；
+      \item 否则拿走该列的资源牌，翻面收进资源。
+      \end{enumerate}
+\item \textbf{结算}：只结算玩家自己的目标分，Tybor 不结算目标；总分高者胜。
+      三档难度对应官方的两个旋钮：容易（他只带 2 种资源）、普通、困难（4 种资源且从 4 分起步）。
+\end{enumerate}
+实现只增加了三个查询接口：
+\begin{itemize}
+\item \cl{Carte::pointsImprimes()}：返回牌面印的数字，与倍率无关；
+\item \cl{Carte::porteObjet(Ressource)}：牌面（四角或中央）是否带某个物件；
+\item \cl{Objectif::correspondALaCarte(const Carte\&)}：判断一张牌是否服务该目标，
+      \cl{ObjectifCompose} 递归询问子目标，沿用 Composite 的既有结构。
+\end{itemize}
+50 局自动对局（3 级 AI 对 Tybor，普通难度）验证：全部正常结束，Tybor 平均 15 分
+（困难档平均 18 分），且从不结算目标分；玩家侧 48/50 胜——把 Tybor 当作「不会失误的
+稳定陪练」是合理的定位，人类玩家不会像 3 级 AI 那样每手都算目标增益。
+
 \subsection{终局与平局}
 触发条件：任意玩家分数 $\ge 20$，或两个牌堆都空。触发后引擎计算
 \cl{toursRestants = (本轮剩余玩家) + 玩家人数}，每完成一个回合减一，归零即结算。
@@ -662,7 +741,8 @@ AI & 评分函数（越大越好） \\
 可见资源重算 & $O(n)$ & $n$ 为已放牌数（最多约 40） \\
 目标计分 & $O(n \log n)$ & 排序 + 贪心取三元组 \\
 AI 决策 & $O(n \cdot k \cdot 2 \cdot 4n)$ & $k$ 为手牌数（3） \\
-200 局自动对局 & 约 7 秒 & 4 名最高难度 AI \\
+200 局四人自动对局 & 约 7 秒 & 4 名 AI，6240 回合 \\
+50 局单人自动对局 & 约 0.6 秒 & 3 级 AI 对 Tybor，976 回合 \\
 \bottomrule
 \end{tabular}
 \caption{关键操作复杂度与实测性能}
@@ -731,10 +811,28 @@ private:
 实现 \cl{Vue} 接口（例如彩色终端界面或图形界面），在 \cl{main} 里替换对象。
 \textbf{不改}模型层任何代码。
 
-\subsection{接入官方单人模式（Tybor）}
-官方单人模式使用专属卡组与计分表。做法：新增 \cl{StrategieTybor : StrategieIA} 与一份
-单人卡组数据；\cl{Partie} 的回合、放置、计分流程完全复用。这正是作业要求
-「架构易于整合新组件、新 AI」的直接体现。
+\subsection{单人模式已经实现：一次真实的扩展演练}
+官方单人模式不是「以后再说」的条目，而是本项目里唯一一次真实的扩展：模型层新增
+\cl{Tybor} 类与 \cl{jouerTourTybor} 入口，\cl{Joueur} 只加一个 \cl{estTybor()} 标记，
+\cl{Partie} 的轮转、终局、名次、\cl{ZoneDeJeu}、\cl{Carte}、\cl{Objectif} 全部原样复用。
+代价可以量化：新增 2 个文件（200 行），\cl{Partie} 约 70 行接线，
+\cl{Joueur}、\cl{Carte}、\cl{Objectif}、\cl{ConfigurationPartie} 各加一个查询或标记
+（合计约 70 行），\textbf{零}行既有规则代码被改写。
+
+值得说明的是\textbf{为什么 Tybor 不实现为} \cl{StrategieIA}：\cl{StrategieIA}
+的契约是「替某位玩家在自己的手稿上选一张牌与一个落点」，而 Tybor 没有手稿、没有手牌，
+他的动作是「从中央明牌里取牌并改自己的资源」，两者接口不同。强行套用会逼着
+\cl{StrategieIA} 增加一堆「如果这个玩家不是真玩家」的分支，反而破坏既有抽象。
+因此这里选择\textbf{组合}而不是继承：\cl{Partie} 组合一个 \cl{Tybor}，
+控制器只多一个分支（图 \ref{fig:solo}）。
+
+\subsection{接入精灵牌（不属于基础版的可选扩展）}
+精灵牌不在官方基础版的组件表里，所以本项目没有实现它；若将来要加，按新增一类牌处理：
+新增 \cl{CarteEsprit : Carte} 与 \cl{FabriqueCarteEsprit}，在 \cl{DonneesCartes.h}
+里加一个 \cl{CATEGORIE\_ESPRIT} 常量与若干数据行，并在目录里注册。
+因为放置校验、即时计分与显示都只依赖 \cl{Carte} 抽象，规则代码不需要修改；
+若精灵牌带来全新机制（例如离场效果），只需在 \cl{Partie} 的回合钩子里加一个
+虚函数 \cl{effetApresPose}，由基类给空实现、\cl{CarteEsprit} 覆写。
 
 \begin{table}[h]
 \centering
@@ -747,7 +845,7 @@ private:
 新目标类型 & \cl{ObjectifX} + \cl{FabriqueObjectifX} & 目录注册一行 \\
 新牌类 & \cl{CarteX} + 数据表条目 & 无 \\
 新显示 & \cl{VueGraphique : Vue} & \cl{main} 换一个对象 \\
-官方单人模式 & \cl{StrategieTybor} + 单人卡组数据 & 无 \\
+新单人对手 & \cl{Tybor}（组合，不继承 \cl{StrategieIA}） & \cl{Partie} 加一个组件与入口 \\
 存档 / 悔棋 & \cl{Memento} 类（未实现） & \cl{Partie} 增加保存/恢复接口 \\
 \bottomrule
 \end{tabular}
@@ -837,13 +935,13 @@ private:
 
 \subsection{测试方法}
 不引入第三方框架：\cl{tests/harnais.h} 用三个宏（相等、为真、抛异常）实现断言，
-按模块划分为 5 个文件（卡表、棋盘、目标、引擎、AI）。运行方式：
+按模块划分为 6 个文件（卡表、棋盘、目标、引擎、AI、单人模式）。运行方式：
 \begin{center}
 \begin{minipage}{\linewidth}
 \begin{lstlisting}
 powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 #   Compilation du jeu... / Compilation des tests... / Execution des tests...
-#   207 verifications, 0 echec(s).   TOUS LES TESTS PASSENT
+#   249 verifications, 0 echec(s).   TOUS LES TESTS PASSENT
 powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
 #   Aucune fonctionnalite hors cours detectee
 \end{lstlisting}
@@ -856,13 +954,14 @@ powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
 \toprule
 测试文件 & 断言数 & 覆盖内容 \\
 \midrule
-\cl{test\_cartes.cpp} & 14 & 86 张牌、16 目标、每王国 10 张、12 张 1 分、16/12/12 三类镀金、非法 id 抛异常 \\
-\cl{test\_zone.cpp} & 13 & 空区、对角放置、隔离放置拒绝、缺失角拒绝、重叠拒绝、双角覆盖合法、覆盖后资源减少、迭代器计数 \\
+\cl{test\_cartes.cpp} & 58 & 86 张牌、16 目标、每王国 10 张、12 张 1 分、16/12/12 三类镀金、牌面数字、物件查询、非法 id 抛异常 \\
+\cl{test\_zone.cpp} & 19 & 空区、对角放置、隔离放置拒绝、缺失角拒绝、重叠拒绝、双角覆盖合法、覆盖后资源减少、迭代器计数 \\
 \cl{test\_objectifs.cpp} & 12 & 斜线、L、混合王国无效、三同资源、物件对、三异、组合目标求和 \\
-\cl{test\_partie.cpp} & 12 & 开局手牌、准备阶段不可放牌、先放后抽、终局、总分 = 牌面 + 目标、胜者合法 \\
-\cl{test\_ia.cpp} & 12 局 & 1--4 人 $\times$ 3 难度完整对局，分数与总量一致性 \\
+\cl{test\_partie.cpp} & 20 & 开局手牌、准备阶段不可放牌、先放后抽、终局、总分 = 牌面 + 目标、胜者合法 \\
+\cl{test\_ia.cpp} & 107 & 1--4 人 $\times$ 3 难度完整对局，分数与总量一致性；单人局多一行 Tybor \\
+\cl{test\_solo.cpp} & 33 & 单人布置（无初始牌/手牌/目标）、Tybor 不许选牌、三档难度、取牌回合、牌面数字与目标匹配、整局结算 \\
 \midrule
-合计 & 207 次断言 & 见上 \\
+合计 & 249 次断言 & 见上 \\
 \bottomrule
 \caption{单元与集成测试明细}
 \label{tab:tests}
@@ -873,7 +972,9 @@ powershell -ExecutionPolicy Bypass -File scripts\check_scope.ps1
 因此「同一种子 $\Rightarrow$ 同一局」完全成立。批量验证：
 \begin{lstlisting}
 codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
-# 200 partie(s) terminee(s), environ 6200 tours joues, aucune exception
+# 200 partie(s) terminee(s), 6240 tours joues, aucune exception
+codex_naturalis --auto 50 --joueurs 1 --niveau 3 --graine 2026
+# 50 partie(s) terminee(s), 976 tours joues, Tybor 0 point d'objectif
 \end{lstlisting}
 工程层面还做了两项检查：全部源文件在 \cl{-std=c++14} 与 \cl{-std=c++17} 下编译，
 并开启 \cl{-Wall -Wextra -pedantic}，结果均为零警告。
@@ -884,6 +985,15 @@ codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
 
 \subsection{开局}
 \cl{Menu} 依次询问人数（1--4）、每个座位的姓名、真人或电脑（以及电脑难度）、随机种子。
+人数为 1 时只问姓名与难度（1 = 容易、2 = 普通、3 = 困难），对手固定为 Tybor Kwelein，
+程序随即打印他开局拥有的资源（四种王国各 1 个，容易档只有两种）：
+\begin{lstlisting}
+Nombre de joueurs (1 a 4) : 1
+Mode solo : vous affrontez le moine Tybor Kwelein.
+Difficulte : 1 = facile, 2 = normal, 3 = difficile : 2
+--- Mode solo : vous affrontez Tybor Kwelein ---
+Tybor Kwelein : plante 1, animal 1, champignon 1, insecte 1
+\end{lstlisting}
 随后进入准备阶段，逐位玩家显示自己的初始牌正反两面（四个角的符号与中央永久资源），
 再显示两张候选秘密目标的文字描述，让玩家二选一。这些询问都可以用一个文本文件重放
 （\cl{--entree}），因此同一场演示可以精确复现。
@@ -900,6 +1010,15 @@ codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
 然后程序只列出\textbf{当前合法}的落点（编号 + 坐标），玩家输入编号即可，无需自己算坐标。
 若输入非法（例如手牌编号越界、或者该牌此刻无法放置），程序给出原因并重新询问，
 不会中断对局。
+
+单人模式下，玩家回合结束后 Tybor 的回合只占三行：局面表头、他的资源现状、他这一手做了什么。
+两列各一张牌，因此一行摘要里能看到「弃牌得分」与「收走资源」两类动作：
+\begin{lstlisting}
+Scores : Alice=0 Tybor Kwelein=0   |   Pioche : ressources 35, dorees 37
+Tour 1 - Tybor Kwelein (ordinateur)   etat : il prend une carte dans chaque colonne
+Tybor Kwelein : plante 1, animal 1, champignon 1, insecte 1
+Tybor joue : prend R11 en ressource plante | garde D66 en ressource animal
+\end{lstlisting}
 
 \subsection{终局}
 触发终局后先打印最后几回合的提示，再输出结果表：每位玩家的「牌面分 / 目标分 / 总分」，
@@ -918,17 +1037,18 @@ codex_naturalis --auto 200 --joueurs 4 --niveau 3 --graine 2026
 （2）依赖抽象类型（\cl{Carte}、\cl{Objectif}、\cl{StrategieIA}、\cl{Vue}），
 使扩展只需新增子类；
 （3）用数据表 + 工厂把「86 张牌」与「规则代码」彻底分离。
-后续可以继续做：官方单人 Tybor 模式、图形界面、存档（Memento）、
-以及更多扩展牌与新的目标类型。
+后续可以继续做：图形界面、存档（Memento）、精灵牌等可选扩展牌，
+以及更聪明的 Tybor（例如按当前局面挑选公共目标）。
 
 \appendix
 \section{编译与运行}
 \begin{lstlisting}
 # Prerequis : MinGW (GCC) fourni avec CLion, PowerShell
 powershell -ExecutionPolicy Bypass -File scripts\build.ps1
-.\build\codex_naturalis.exe                              # mode interactif
+.\build\codex_naturalis.exe                              # mode interactif (1 a 4 joueurs)
 .\build\codex_naturalis.exe --aide                       # liste des options
 .\build\codex_naturalis.exe --auto 20 --joueurs 4 --niveau 3   # mode automatique
+.\build\codex_naturalis.exe --auto 20 --joueurs 1 --difficulte 3  # 20 duels contre Tybor
 .\build\codex_naturalis.exe --entree scripts\demo_entree.txt   # demonstration scriptee
 .\build\codex_tests.exe                                  # tests unitaires seuls
 \end{lstlisting}

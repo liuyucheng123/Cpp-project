@@ -55,5 +55,6 @@ Le modele ne connait ni la console ni les saisies : il ne fait aucun affichage.
 4. **Nouvelle presentation** (par exemple graphique) : implementer `Vue`, remplacer
    `VueConsole` dans `main`. Le modele reste identique.
 5. **Sauvegarde de partie** : ajouter une `Memento` de `Partie` (non implemente, hors delai).
-6. **Dieu Tybor (mode solo officiel)** : ajouter une `StrategieTybor` qui pioche dans un
-   paquet dedie et applique ses regles ; le reste du moteur est reutilisable.
+6. **Nouvel adversaire solo** : le mode officiel Tybor est deja implemente ainsi — classe
+   `Tybor` (composition dans `Partie`, pas une `StrategieIA`, car Tybor n'a ni main ni codex)
+   et entree `Partie::jouerTourTybor`. Un autre adversaire du meme genre se branche pareil.

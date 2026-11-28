@@ -52,12 +52,16 @@ d'objectifs ; si l'egalite persiste, la victoire est partagee.
 
 ## 6. Ecarts assumes par rapport au jeu edite
 
-1. **Mode solo** : le mode officiel "Tybor Kwelein" utilise un paquet dedie et un bareme
-   particulier. Faute de donnees publiees completes, le projet implemente un mode
-   "1 joueur humain + IA" qui reutilise les regles multijoueurs (et le rapport explique
-   comment brancher le mode officiel via une nouvelle `StrategieIA`).
-2. **Motif en L** : le motif est interprete comme trois cartes (deux pas diagonaux
+1. **Mode solo** : implemente d'apres la variante officielle "Tybor Kwelein" (un adversaire
+   sans main ni codex, qui prend une carte dans chacune des deux colonnes de la rangee
+   visible). Deux points restent des interpretations : la correspondance entre les deux
+   colonnes et les 4 cartes visibles du programme, et le fait que Tybor encaisse le nombre
+   imprime sur une carte doree qu'il defausse (sans appliquer les multiplicateurs).
+2. **Cartes esprits** : elles n'appartiennent pas au jeu de base, donc elles ne sont pas
+   implementees ; l'ajout d'une famille de cartes est decrit dans `docs/ARCHITECTURE.md`
+   (extension 3).
+3. **Motif en L** : le motif est interprete comme trois cartes (deux pas diagonaux
    perpendiculaires). Si la carte officielle utilise quatre cartes, il suffit d'ajouter
    une sous-classe d'`Objectif` (voir `docs/ARCHITECTURE.md`, extension 2).
-3. **Images** : l'affichage est textuel (les illustrations ne sont pas reproduites),
+4. **Images** : l'affichage est textuel (les illustrations ne sont pas reproduites),
    ce qui est autorise par le sujet ("seul le fait de pouvoir jouer compte").

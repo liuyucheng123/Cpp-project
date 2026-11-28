@@ -25,8 +25,9 @@ En cas d'ouverture dans CLion : ouvrir le dossier `code`, la configuration CMake
 |---|---|
 | `--graine N` | graine du hasard (defaut 2026) : deux parties avec la meme graine sont identiques |
 | `--auto N` | joue N parties entierement automatiques (verification rapide) |
-| `--joueurs N` | nombre de joueurs du mode auto (1 a 4) |
+| `--joueurs N` | nombre de joueurs du mode auto (1 a 4 ; 1 = duel contre Tybor) |
 | `--niveau N` | niveau des IA du mode auto (1 hasard, 2 glouton, 3 objectifs) |
+| `--difficulte N` | difficulte du mode solo (1 facile, 2 normal, 3 difficile) |
 | `--entree F` | rejoue les reponses ecrites dans le fichier F (demonstration, tests) |
 | `--aide` | affiche l'aide |
 
@@ -34,11 +35,14 @@ Exemple de verification complete :
 
 ```powershell
 .\build\codex_naturalis.exe --auto 20 --joueurs 3 --niveau 3 --graine 1
+.\build\codex_naturalis.exe --auto 10 --joueurs 1 --difficulte 3 --graine 1   # 10 duels vs Tybor
 ```
 
 ## Regles implementees
 
-* 1 a 4 joueurs (les sieges peuvent etre humains ou ordinateurs).
+* 1 a 4 joueurs. 1 joueur = **mode solo officiel** : on affronte le moine Tybor Kwelein
+  (il n'a ni main, ni codex, ni objectif ; il prend une carte dans chacune des deux colonnes
+  de la rangee visible). 2 a 4 joueurs : les sieges peuvent etre humains ou ordinateurs.
 * Mise en place : carte initiale (choix de la face), 3 cartes en main, 2 objectifs communs,
   choix d'un objectif secret parmi 2.
 * Tour : poser une carte (en recouvrant au moins un coin visible d'une carte deja posee,
@@ -47,6 +51,13 @@ Exemple de verification complete :
 * Points immediats (banniere, coins recouverts, objets) puis points d'objectifs en fin de partie.
 * Fin de partie a 20 points ou quand les deux tas sont vides ; on termine la manche,
   chaque joueur rejoue une derniere fois, puis on ajoute les objectifs.
+* Mode solo, tour de Tybor : (1) s'il a les ressources exigees par la carte doree de la colonne,
+  il la defausse et marque le nombre imprime ; (2) sinon, si elle vaut 5 points ou sert l'un des
+  deux objectifs communs, il la retourne et l'ajoute a ses ressources ; (3) sinon il prend la
+  carte ressource de la colonne. Il ne marque jamais de point d'objectif.
+
+> Les cartes esprits ne font pas partie du jeu de base : elles ne sont pas implementees,
+> et l'architecture prevoit leur ajout (voir le rapport, section « 可扩展性论证 »).
 
 Les details et les choix d'interpretation sont dans `docs/REGLES_OBJECTIFS.md`.
 
