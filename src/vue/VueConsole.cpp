@@ -123,7 +123,9 @@ void VueConsole::afficherTable(const Partie& partie)
         flux << " (ordinateur)";
     }
     flux << "   etat : ";
-    if (partie.attentePioche()) {
+    if (actuel.estTybor()) {
+        flux << "il prend une carte dans chaque colonne";
+    } else if (partie.attentePioche()) {
         flux << "il faut piocher";
     } else {
         flux << "il faut poser une carte";

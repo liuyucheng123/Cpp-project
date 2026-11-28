@@ -29,6 +29,7 @@ private:
     void boucleDeJeu();
     void tourHumain();
     void tourOrdinateur();
+    void tourTybor();
     void jouerUnTourHumain();
     void poserCarteHumaine();
     void piocherHumain();

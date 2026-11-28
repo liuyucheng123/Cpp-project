@@ -34,7 +34,7 @@ ControleurPartie::ControleurPartie(Partie& partieJeu, Vue& vueAffichage, Saisie&
 {
     for (int i = 0; i < partie.nombreJoueurs(); ++i) {
         const Joueur& joueur = partie.joueur(i);
-        if (joueur.estOrdinateur()) {
+        if (joueur.estOrdinateur() && !joueur.estTybor()) {
             strategies[i] = creerStrategie(joueur.niveau(), generateur);
         }
     }
@@ -67,8 +67,15 @@ int ControleurPartie::demanderEntier(const std::string& question, int minimum, i
 
 void ControleurPartie::phasePreparation()
 {
+    if (partie.estModeSolo()) {
+        vue.afficherMessage("--- Mode solo : vous affrontez Tybor Kwelein ---");
+        vue.afficherMessage(partie.adversaire().description());
+    }
     for (int i = 0; i < partie.nombreJoueurs(); ++i) {
         const Joueur& joueur = partie.joueur(i);
+        if (joueur.estTybor()) {
+            continue;
+        }
         std::shared_ptr<const Carte> initiale = joueur.carteInitiale();
 
         if (joueur.estOrdinateur()) {
@@ -228,6 +235,13 @@ void ControleurPartie::tourOrdinateur()
     }
 }
 
+void ControleurPartie::tourTybor()
+{
+    vue.afficherTable(partie);
+    vue.afficherMessage(partie.adversaire().description());
+    vue.afficherMessage(partie.jouerTourTybor());
+}
+
 void ControleurPartie::boucleDeJeu()
 {
     int securite = 0;
@@ -237,7 +251,9 @@ void ControleurPartie::boucleDeJeu()
             throw ExceptionJeu("trop de tours : arret de securite");
         }
         int indice = partie.joueurCourant();
-        if (partie.joueur(indice).estOrdinateur()) {
+        if (partie.joueur(indice).estTybor()) {
+            tourTybor();
+        } else if (partie.joueur(indice).estOrdinateur()) {
             tourOrdinateur();
         } else {
             jouerUnTourHumain();

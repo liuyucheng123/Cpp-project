@@ -31,10 +31,17 @@ ResumeSimulation jouerPartieAutomatique(const ConfigurationPartie& configuration
             configuration.graine + static_cast<unsigned int>(i) * 7919U + 17U);
         generateurs.push_back(generateurIA);
         const Joueur& joueur = partie.joueur(i);
-        strategies.push_back(creerStrategie(joueur.niveau(), *generateurIA));
+        if (joueur.estTybor()) {
+            strategies.push_back(std::shared_ptr<StrategieIA>());
+        } else {
+            strategies.push_back(creerStrategie(joueur.niveau(), *generateurIA));
+        }
     }
 
     for (int i = 0; i < partie.nombreJoueurs(); ++i) {
+        if (partie.joueur(i).estTybor()) {
+            continue;
+        }
         partie.choisirFaceInitiale(i, generateurs[static_cast<std::size_t>(i)]->suivant(2U) == 0U);
         partie.choisirObjectifSecret(i, static_cast<int>(generateurs[static_cast<std::size_t>(i)]->suivant(2U)));
     }
@@ -47,7 +54,11 @@ ResumeSimulation jouerPartieAutomatique(const ConfigurationPartie& configuration
             throw ExceptionJeu("boucle infinie detectee dans la simulation");
         }
         int indice = partie.joueurCourant();
-        jouerTourAutomatique(partie, indice, *strategies[static_cast<std::size_t>(indice)]);
+        if (partie.joueur(indice).estTybor()) {
+            partie.jouerTourTybor();
+        } else {
+            jouerTourAutomatique(partie, indice, *strategies[static_cast<std::size_t>(indice)]);
+        }
         ++resume.toursJoues;
     }
 

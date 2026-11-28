@@ -30,8 +30,10 @@ void afficherAide()
     std::cout << "Usage : codex_naturalis [options]" << std::endl;
     std::cout << "  --graine N     graine du hasard (defaut 2026)" << std::endl;
     std::cout << "  --auto N       joue N parties entierement automatiques" << std::endl;
-    std::cout << "  --joueurs N    nombre de joueurs du mode auto (1 a 4)" << std::endl;
+    std::cout << "  --joueurs N    nombre de joueurs du mode auto (1 a 4 ; 1 = duel contre Tybor)"
+              << std::endl;
     std::cout << "  --niveau N     niveau des IA du mode auto (1 a 3)" << std::endl;
+    std::cout << "  --difficulte N difficulte du mode solo (1 a 3, defaut 2)" << std::endl;
     std::cout << "  --entree F     rejoue les reponses contenues dans le fichier F" << std::endl;
     std::cout << "  --aide         affiche cette aide" << std::endl;
 }
@@ -44,6 +46,7 @@ int main(int argc, char** argv)
     int partiesAutomatiques = 0;
     int joueursAuto = 2;
     int niveauAuto = 2;
+    int difficulteSolo = 2;
     std::string fichierEntree;
 
     for (int i = 1; i < argc; ++i) {
@@ -64,6 +67,9 @@ int main(int argc, char** argv)
         } else if (option == "--niveau" && i + 1 < argc && convertirEntier(argv[i + 1], valeur)) {
             niveauAuto = valeur < 1 ? 1 : (valeur > 3 ? 3 : valeur);
             ++i;
+        } else if (option == "--difficulte" && i + 1 < argc && convertirEntier(argv[i + 1], valeur)) {
+            difficulteSolo = valeur < 1 ? 1 : (valeur > 3 ? 3 : valeur);
+            ++i;
         } else if (option == "--entree" && i + 1 < argc) {
             fichierEntree = argv[i + 1];
             ++i;
@@ -76,6 +82,7 @@ int main(int argc, char** argv)
         for (int numero = 0; numero < partiesAutomatiques; ++numero) {
             ConfigurationPartie configuration;
             configuration.graine = graine + static_cast<unsigned int>(numero) * 101U;
+            configuration.difficulteSolo = difficulteSolo - 1;
             for (int siege = 0; siege < joueursAuto; ++siege) {
                 std::ostringstream nom;
                 nom << "IA" << (siege + 1);

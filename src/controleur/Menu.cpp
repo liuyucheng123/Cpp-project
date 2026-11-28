@@ -69,22 +69,31 @@ ConfigurationPartie Menu::demanderConfiguration(unsigned int graineParDefaut)
     vue.afficherMessage("Nombre de joueurs (1 a 4) :");
     int nombre = demanderEntier("Votre choix :", 1, 4);
 
-    for (int i = 0; i < nombre; ++i) {
-        std::ostringstream question;
-        question << "Nom du joueur " << (i + 1) << " :";
-        std::ostringstream defaut;
-        defaut << "Joueur" << (i + 1);
-        std::string nom = demanderTexte(question.str(), defaut.str());
+    if (nombre == 1) {
+        // Mode solo officiel : un seul codex humain, l'adversaire est Tybor.
+        vue.afficherMessage("Mode solo : vous affrontez le moine Tybor Kwelein.");
+        std::string nomSolo = demanderTexte("Votre nom :", "Joueur");
+        vue.afficherMessage("Difficulte : 1 = facile, 2 = normal, 3 = difficile");
+        configuration.difficulteSolo = demanderEntier("Votre choix :", 1, 3) - 1;
+        configuration.sieges.push_back(ConfigurationJoueur(nomSolo, false, 0));
+    } else {
+        for (int i = 0; i < nombre; ++i) {
+            std::ostringstream question;
+            question << "Nom du joueur " << (i + 1) << " :";
+            std::ostringstream defaut;
+            defaut << "Joueur" << (i + 1);
+            std::string nom = demanderTexte(question.str(), defaut.str());
 
-        std::ostringstream questionType;
-        questionType << "Joueur " << nom << " : 1 = humain, 2 = ordinateur";
-        int type = demanderEntier(questionType.str(), 1, 2);
+            std::ostringstream questionType;
+            questionType << "Joueur " << nom << " : 1 = humain, 2 = ordinateur";
+            int type = demanderEntier(questionType.str(), 1, 2);
 
-        int niveau = 0;
-        if (type == 2) {
-            niveau = demanderEntier("Niveau de l'ordinateur : 1 = hasard, 2 = glouton, 3 = objectifs", 1, 3) - 1;
+            int niveau = 0;
+            if (type == 2) {
+                niveau = demanderEntier("Niveau de l'ordinateur : 1 = hasard, 2 = glouton, 3 = objectifs", 1, 3) - 1;
+            }
+            configuration.sieges.push_back(ConfigurationJoueur(nom, type == 2, niveau));
         }
-        configuration.sieges.push_back(ConfigurationJoueur(nom, type == 2, niveau));
     }
 
     int graine = demanderEntier("Graine du hasard (nombre entier positif, 2026 par defaut) :", 1, 1000000000);
