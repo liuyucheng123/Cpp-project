@@ -5,6 +5,7 @@
 #include "modele/ConfigurationPartie.h"
 #include "modele/Joueur.h"
 #include "modele/Pioche.h"
+#include "modele/Tybor.h"
 
 #include <memory>
 #include <string>
@@ -61,9 +62,17 @@ public:
     const Pioche& pioche() const;
     std::shared_ptr<const Objectif> objectifCommun(int indice) const;
 
+    // Mode solo officiel : un seul joueur humain, plus Tybor Kwelein.
+    bool estModeSolo() const;
+    int indiceTybor() const;   // -1 hors mode solo
+    const Tybor& adversaire() const;
+
     void jouerCarte(int indiceMain, Coordonnee origine, bool recto);
     void piocher(SourcePioche source, int indiceEtalee);
     void passerTour();
+
+    // Tour de Tybor (mode solo) : renvoie le journal de son tour.
+    std::string jouerTourTybor();
 
     // Vrai si le joueur peut poser au moins une de ses cartes quelque part.
     bool placementPossible(int indiceJoueur) const;
@@ -83,6 +92,7 @@ private:
     ConfigurationPartie configuration;
     std::vector<Joueur> joueurs;
     Pioche piocheCartes;
+    Tybor tybor;
     std::shared_ptr<const Objectif> objectifsCommuns[2];
     std::vector<std::shared_ptr<const Carte> > initialesDisponibles;
     std::vector<int> objectifsDisponibles;

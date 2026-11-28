@@ -12,13 +12,18 @@ ConfigurationJoueur::ConfigurationJoueur(const std::string& nomJoueur, bool estO
 {
 }
 
-ConfigurationPartie::ConfigurationPartie() : graine(1U)
+ConfigurationPartie::ConfigurationPartie() : graine(1U), difficulteSolo(1)
 {
 }
 
 bool ConfigurationPartie::valide() const
 {
     return sieges.size() >= 1U && sieges.size() <= 4U;
+}
+
+bool ConfigurationPartie::modeSolo() const
+{
+    return sieges.size() == 1U;
 }
 
 } // namespace codex

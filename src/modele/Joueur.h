@@ -17,11 +17,14 @@ class Joueur
 {
 public:
     Joueur();
-    Joueur(const std::string& nomJoueur, bool ordinateur, int niveau);
+    Joueur(const std::string& nomJoueur, bool ordinateur, int niveau, bool adversaireSolo = false);
 
     const std::string& nom() const;
     bool estOrdinateur() const;
     int niveau() const;
+    // Vrai pour l'adversaire du mode solo : il n'a ni main, ni carte initiale,
+    // ni objectif secret, et son codex reste vide (voir Tybor).
+    bool estTybor() const;
 
     ZoneDeJeu& zone();
     const ZoneDeJeu& zone() const;
@@ -51,6 +54,7 @@ private:
     std::string nomJoueur;
     bool ordinateur;
     int niveauIA;
+    bool adversaireTybor;
     ZoneDeJeu zoneJeu;
     std::vector<std::shared_ptr<const Carte> > cartesMain;
     std::vector<std::shared_ptr<const Objectif> > objectifsCandidats;

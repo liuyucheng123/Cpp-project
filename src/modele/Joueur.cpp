@@ -9,14 +9,16 @@
 namespace codex {
 
 Joueur::Joueur()
-    : nomJoueur("Joueur"), ordinateur(false), niveauIA(0), zoneJeu(),
+    : nomJoueur("Joueur"), ordinateur(false), niveauIA(0), adversaireTybor(false), zoneJeu(),
       cartesMain(), objectifsCandidats(), objectifRetenu(), initiale(),
       faceChoisie(false), rectoInitial(true), points(0)
 {
 }
 
-Joueur::Joueur(const std::string& nomJoueurParam, bool estOrdinateur, int niveau)
-    : nomJoueur(nomJoueurParam), ordinateur(estOrdinateur), niveauIA(niveau), zoneJeu(),
+Joueur::Joueur(const std::string& nomJoueurParam, bool estOrdinateur, int niveau,
+               bool adversaireSolo)
+    : nomJoueur(nomJoueurParam), ordinateur(estOrdinateur), niveauIA(niveau),
+      adversaireTybor(adversaireSolo), zoneJeu(),
       cartesMain(), objectifsCandidats(), objectifRetenu(), initiale(),
       faceChoisie(false), rectoInitial(true), points(0)
 {
@@ -35,6 +37,11 @@ bool Joueur::estOrdinateur() const
 int Joueur::niveau() const
 {
     return niveauIA;
+}
+
+bool Joueur::estTybor() const
+{
+    return adversaireTybor;
 }
 
 ZoneDeJeu& Joueur::zone()

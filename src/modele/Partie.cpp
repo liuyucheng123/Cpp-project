@@ -21,7 +21,7 @@ ResultatJoueur::ResultatJoueur()
 }
 
 Partie::Partie()
-    : etatPartie(EtatPartie::NON_DEMARREE), configuration(), joueurs(), piocheCartes(),
+    : etatPartie(EtatPartie::NON_DEMARREE), configuration(), joueurs(), piocheCartes(), tybor(),
       objectifsCommuns(), initialesDisponibles(), objectifsDisponibles(),
       indexCourant(0), compteurTours(1), attenteDePioche(false), toursRestants(0), passesConsecutifs(0), classement()
 {
@@ -70,6 +70,17 @@ void Partie::preparer(const ConfigurationPartie& configurationDemandee, Generate
         joueurs.push_back(joueur);
     }
 
+    // Mode solo officiel : Tybor n'a ni carte initiale, ni main, ni objectif.
+    tybor = Tybor(configuration.difficulteSolo);
+    if (configuration.modeSolo()) {
+        Joueur adversaire("Tybor Kwelein", true, 0, true);
+        if (configuration.difficulteSolo == 2) {
+            // Difficulte difficile : Tybor part avec 4 points d'avance.
+            adversaire.ajouterPoints(4);
+        }
+        joueurs.push_back(adversaire);
+    }
+
     indexCourant = 0;
     compteurTours = 1;
     attenteDePioche = false;
@@ -81,6 +92,9 @@ void Partie::preparer(const ConfigurationPartie& configurationDemandee, Generate
 bool Partie::preparationTerminee() const
 {
     for (std::size_t i = 0; i < joueurs.size(); ++i) {
+        if (joueurs[i].estTybor()) {
+            continue;
+        }
         if (!joueurs[i].faceInitialeChoisie() || !joueurs[i].objectifChoisi()) {
             return false;
         }
@@ -96,6 +110,9 @@ void Partie::choisirFaceInitiale(int indiceJoueur, bool recto)
     if (etatPartie != EtatPartie::PREPARATION) {
         throw ExceptionJeu("le choix de la carte initiale n'est plus possible");
     }
+    if (joueurs[static_cast<std::size_t>(indiceJoueur)].estTybor()) {
+        throw ExceptionJeu("Tybor n'a pas de carte initiale");
+    }
     joueurs[static_cast<std::size_t>(indiceJoueur)].choisirFaceInitiale(recto);
 }
 
@@ -106,6 +123,9 @@ void Partie::choisirObjectifSecret(int indiceJoueur, int indiceCandidat)
     }
     if (etatPartie != EtatPartie::PREPARATION) {
         throw ExceptionJeu("le choix de l'objectif secret n'est plus possible");
+    }
+    if (joueurs[static_cast<std::size_t>(indiceJoueur)].estTybor()) {
+        throw ExceptionJeu("Tybor n'a pas d'objectif secret");
     }
     joueurs[static_cast<std::size_t>(indiceJoueur)].choisirObjectifSecret(indiceCandidat);
 }
@@ -119,6 +139,9 @@ void Partie::commencer()
         throw ExceptionJeu("tous les joueurs doivent choisir leur carte initiale et leur objectif");
     }
     for (std::size_t i = 0; i < joueurs.size(); ++i) {
+        if (joueurs[i].estTybor()) {
+            continue;
+        }
         joueurs[i].zone().poserCarteInitiale(joueurs[i].carteInitiale(), joueurs[i].faceInitialeRecto());
     }
     indexCourant = 0;
@@ -185,6 +208,45 @@ std::shared_ptr<const Objectif> Partie::objectifCommun(int indice) const
         throw SaisieInvalide("indice d'objectif commun invalide");
     }
     return objectifsCommuns[indice];
+}
+
+bool Partie::estModeSolo() const
+{
+    return indiceTybor() >= 0;
+}
+
+int Partie::indiceTybor() const
+{
+    for (std::size_t i = 0; i < joueurs.size(); ++i) {
+        if (joueurs[i].estTybor()) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+const Tybor& Partie::adversaire() const
+{
+    return tybor;
+}
+
+std::string Partie::jouerTourTybor()
+{
+    verifierTour();
+    const int indice = indiceTybor();
+    if (indice < 0 || indice != indexCourant) {
+        throw ExceptionJeu("ce n'est pas le tour de Tybor");
+    }
+    if (attenteDePioche) {
+        throw ExceptionJeu("le tour precedent n'est pas termine");
+    }
+
+    std::string journal = tybor.jouerTour(piocheCartes, *objectifsCommuns[0], *objectifsCommuns[1],
+                                          joueurs[static_cast<std::size_t>(indice)]);
+    passesConsecutifs = 0;
+    verifierFinDePartie();
+    terminerTour();
+    return journal;
 }
 
 void Partie::verifierTour() const
@@ -349,6 +411,10 @@ int Partie::pointsObjectifs(int indiceJoueur) const
         throw SaisieInvalide("joueur inconnu");
     }
     const Joueur& cible = joueurs[static_cast<std::size_t>(indiceJoueur)];
+    if (cible.estTybor()) {
+        // Tybor ne marque aucun point d'objectif, ni commun ni secret.
+        return 0;
+    }
     int total = 0;
     total += objectifsCommuns[0]->evaluer(cible.zone());
     total += objectifsCommuns[1]->evaluer(cible.zone());

@@ -103,6 +103,13 @@ int CarteDoree::pointsFixes() const
     return 0;
 }
 
+int CarteDoree::pointsImprimes() const
+{
+    // Le nombre de la banniere, meme pour les cartes "par coin" ou "par objet" :
+    // c'est ce nombre que Tybor encaisse en solo, sans les multiplicateurs.
+    return pointsBanniere;
+}
+
 int CarteDoree::pointsVariables(const ContextePose& contexte) const
 {
     if (typeScore == TypeScoreDore::PAR_ANGLE) {

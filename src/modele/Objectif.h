@@ -9,6 +9,7 @@
 
 namespace codex {
 
+class Carte;
 class ZoneDeJeu;
 
 // Objectif de fin de partie. Toutes les conditions partagent la meme
@@ -22,6 +23,11 @@ public:
     int id() const;
     virtual int evaluer(const ZoneDeJeu& zone) const = 0;
     virtual std::string description() const = 0;
+
+    // Vrai si la carte correspond a cet objectif : soit elle porte l'objet
+    // demande, soit elle est du royaume dominant. Sert au mode solo (Tybor
+    // garde une carte Doree qui sert l'un des deux objectifs communs).
+    virtual bool correspondALaCarte(const Carte& carte) const;
 
 private:
     int identifiant;
@@ -37,6 +43,7 @@ public:
     void ajouter(std::shared_ptr<const Objectif> objectif);
     int evaluer(const ZoneDeJeu& zone) const;
     std::string description() const;
+    bool correspondALaCarte(const Carte& carte) const;
 
 private:
     std::vector<std::shared_ptr<const Objectif> > enfants;
@@ -50,6 +57,7 @@ public:
 
     int evaluer(const ZoneDeJeu& zone) const;
     std::string description() const;
+    bool correspondALaCarte(const Carte& carte) const;
 
 private:
     Ressource royaume;
@@ -65,6 +73,7 @@ public:
 
     int evaluer(const ZoneDeJeu& zone) const;
     std::string description() const;
+    bool correspondALaCarte(const Carte& carte) const;
 
 private:
     Ressource royaume;
@@ -79,6 +88,7 @@ public:
 
     int evaluer(const ZoneDeJeu& zone) const;
     std::string description() const;
+    bool correspondALaCarte(const Carte& carte) const;
 
 private:
     Ressource objet;
@@ -93,6 +103,7 @@ public:
 
     int evaluer(const ZoneDeJeu& zone) const;
     std::string description() const;
+    bool correspondALaCarte(const Carte& carte) const;
 
 private:
     int points;

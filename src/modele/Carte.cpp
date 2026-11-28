@@ -1,6 +1,8 @@
 #include "modele/Carte.h"
 
 #include "modele/DonneesCartes.h"
+#include "modele/FaceCarte.h"
+#include "noyau/Coin.h"
 
 namespace codex {
 
@@ -67,6 +69,27 @@ int Carte::pointsAuPose(const ContextePose& contexte) const
     int total = pointsFixes();
     total += pointsVariables(contexte);
     return total;
+}
+
+int Carte::pointsImprimes() const
+{
+    return 0;
+}
+
+bool Carte::porteObjet(Ressource objet) const
+{
+    const FaceCarte& recto = face(true);
+    for (int i = 0; i < NB_COINS; ++i) {
+        if (recto.coin(i) == objet) {
+            return true;
+        }
+    }
+    for (int i = 0; i < recto.nombreCentres(); ++i) {
+        if (recto.centre(i) == objet) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int Carte::pointsVariables(const ContextePose& contexte) const

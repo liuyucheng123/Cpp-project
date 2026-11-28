@@ -47,6 +47,15 @@ public:
     // seules les deux etapes ci-dessous sont specialisees.
     int pointsAuPose(const ContextePose& contexte) const;
 
+    // Nombre imprime sur la banniere, sans appliquer les multiplicateurs
+    // (coins recouverts, objets). Sert au mode solo : Tybor ne retient que
+    // le nombre de la carte Doree qu'il defausse.
+    virtual int pointsImprimes() const;
+
+    // Vrai si la carte porte l'un des objets indiques (coins du recto ou
+    // ressources du centre). Sert a comparer une carte Doree aux objectifs.
+    bool porteObjet(Ressource objet) const;
+
 protected:
     virtual int pointsFixes() const = 0;
     virtual int pointsVariables(const ContextePose& contexte) const;

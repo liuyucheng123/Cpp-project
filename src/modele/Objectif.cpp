@@ -93,6 +93,12 @@ int Objectif::id() const
     return identifiant;
 }
 
+bool Objectif::correspondALaCarte(const Carte& carte) const
+{
+    (void)carte;
+    return false;
+}
+
 ObjectifCompose::ObjectifCompose(int identifiant) : Objectif(identifiant)
 {
 }
@@ -102,6 +108,16 @@ void ObjectifCompose::ajouter(std::shared_ptr<const Objectif> objectif)
     if (objectif) {
         enfants.push_back(objectif);
     }
+}
+
+bool ObjectifCompose::correspondALaCarte(const Carte& carte) const
+{
+    for (std::size_t i = 0; i < enfants.size(); ++i) {
+        if (enfants[i]->correspondALaCarte(carte)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int ObjectifCompose::evaluer(const ZoneDeJeu& zone) const
@@ -140,6 +156,11 @@ std::string ObjectifMotif::description() const
     return flux.str();
 }
 
+bool ObjectifMotif::correspondALaCarte(const Carte& carte) const
+{
+    return carte.royaume() == royaume;
+}
+
 ObjectifSerieRessource::ObjectifSerieRessource(int identifiant, Ressource royaumeObjectif, int pointsObjectif)
     : Objectif(identifiant), royaume(royaumeObjectif), points(pointsObjectif)
 {
@@ -158,6 +179,11 @@ std::string ObjectifSerieRessource::description() const
     return flux.str();
 }
 
+bool ObjectifSerieRessource::correspondALaCarte(const Carte& carte) const
+{
+    return carte.royaume() == royaume;
+}
+
 ObjectifPairesObjet::ObjectifPairesObjet(int identifiant, Ressource objetObjectif, int pointsObjectif)
     : Objectif(identifiant), objet(objetObjectif), points(pointsObjectif)
 {
@@ -174,6 +200,11 @@ std::string ObjectifPairesObjet::description() const
     std::ostringstream flux;
     flux << points << " pts par paire de " << nomRessource(objet);
     return flux.str();
+}
+
+bool ObjectifPairesObjet::correspondALaCarte(const Carte& carte) const
+{
+    return carte.porteObjet(objet);
 }
 
 ObjectifTripletObjets::ObjectifTripletObjets(int identifiant, int pointsObjectif)
@@ -202,6 +233,12 @@ std::string ObjectifTripletObjets::description() const
     std::ostringstream flux;
     flux << points << " pts par triplet plume + encrier + manuscrit";
     return flux.str();
+}
+
+bool ObjectifTripletObjets::correspondALaCarte(const Carte& carte) const
+{
+    return carte.porteObjet(Ressource::PLUME) || carte.porteObjet(Ressource::ENCRIER)
+           || carte.porteObjet(Ressource::MANUSCRIT);
 }
 
 } // namespace codex

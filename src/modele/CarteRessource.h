@@ -17,6 +17,7 @@ public:
     const FaceCarte& face(bool recto) const;
     std::string nom() const;
     std::string description() const;
+    int pointsImprimes() const;
 
 protected:
     int pointsFixes() const;

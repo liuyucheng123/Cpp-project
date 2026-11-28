@@ -22,6 +22,7 @@ public:
 
     bool exigencesSatisfaites(const std::map<Ressource, int>& ressources) const;
     std::string texteExigences() const;
+    int pointsImprimes() const;
 
 protected:
     int pointsFixes() const;

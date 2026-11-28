@@ -59,4 +59,9 @@ int CarteRessource::pointsFixes() const
     return pointsBanniere;
 }
 
+int CarteRessource::pointsImprimes() const
+{
+    return pointsBanniere;
+}
+
 } // namespace codex
